@@ -118,7 +118,7 @@ A variation on this can also work where only one thread posts first and the othe
 \end{multicols}
 \vspace{-2em}
 
-While this solution will not result in deadlock, it is somewhat less efficient than the previous: it may require an extra switch between processes. If $A$ arrives at the \texttt{wait} statement, it waits; then $B$ posts and must then wait for $A$'s post (it cannot proceed right away even though it got there second). After $A$ gets to run again it may proceed to post and unblock $B$. For the most part, we are usually satisfied as long as we are certain that deadlock will not occur that a given solution is acceptable. Nevertheless, the previous solution is provably better and is what programmers want to implement.
+While this solution will not result in deadlock, it is somewhat less efficient than the previous: it may require an extra switch between processes. If $A$ arrives at the \texttt{wait} statement, it waits; then $B$ posts and must then wait for $A$'s post (it cannot proceed right away even though it got there second). After $A$ gets to run again it may proceed to post and unblock $B$. For the most part, as long as we are certain that deadlock will not occur, a solution is acceptable. Nevertheless, the previous solution is provably better and is what programmers want to implement.
 
 \subsection*{Mutual Exclusion}
 We saw previously the motivation and concept of mutual exclusion through messages in the linked list example. The general form in pseudocode is of course:
@@ -147,7 +147,7 @@ Note that both threads $A$ and $B$ are identical here, which was not always the 
 \subsection*{Multiplex}
 In addition to the binary semaphore, we also discussed the general semaphore. If the general semaphore is initialized to $n$, then at most $n$ threads can be in the critical section at a time. This pattern is more common than it might appear at first glance. Restaurants have a certain number of tables and seats. If more people wish to dine than there are seats available, those customers must wait until some seats become available (other customers leave). Restaurants generally want to pack in as many seats as possible, but fire safety regulations set a maximum occupancy for a given space.
 
-In a computer related example, suppose that the system has a problem that when too many concurrent database requests are happening. The queries become slow and eventually time out. A potential solution is to protect all database accesses with a binary semaphore, so only one database query can run at any time. Analysis may reveal that this is too restrictive a policy; perhaps we can execute 5 queries concurrently without any slowdown. Then initialize the semaphore with a value of 5, allowing at most 5 threads into the critical section at any time.
+In a computer related example, suppose that the system has a problem when too many concurrent database requests are happening. The queries become slow and eventually time out. A potential solution is to protect all database accesses with a binary semaphore, so only one database query can run at any time. Analysis may reveal that this is too restrictive a policy; perhaps we can execute 5 queries concurrently without any slowdown. Then initialize the semaphore with a value of 5, allowing at most 5 threads into the critical section at any time.
 
 Now, to represent this in pseudocode. This is a symmetric solution, so it will work for arbitrarily many threads (and showing $A$ and $B$ side by side is not necessary).
 

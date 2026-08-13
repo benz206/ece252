@@ -18,7 +18,7 @@ It returns 0 on success and -1 on failure. There exists a matching Windows funct
 
 \paragraph{All your base...} Our goal is to handle events of some sort. Each event is associated with an \texttt{event\_base} structure, which is a container for a set of events and has some associated configuration. If locking is enabled, it's safe to use in multiple threads, though its loop can only be in one thread. So we might need multiple bases for multiple thread operations.
 
-We can choose what method we would like the event base to use check what events are ready. There are many, but the ones we are most familiar with are already here: select and poll. Other options include epoll, kqueue, dnvpoll, evport, win32~\cite{libevent}.
+We can choose what method we would like the event base to use to check what events are ready. There are many, but the ones we are most familiar with are already here: select and poll. Other options include epoll, kqueue, devpoll, evport, win32~\cite{libevent}.
 
 To create an event base, we can do it in one of two ways:
 \begin{lstlisting}[language=C]
@@ -160,7 +160,7 @@ The easy way is the same as the hard way with no flags set, so the hard way actu
 #define EVLOOP_NO_EXIT_ON_EMPTY 0x04
 \end{lstlisting}
 
-Once means that we just wait for some events to become active, then turn active events until there are no more, then return. The non-blocking option means we won't wait for events to trigger: we'll check if they're ready, run them if so, and skip them if not. And normally the behaviour is to exit from the loop when there are no more events pending or active; you can turn that off with the no-exit flag. If you plan to use that, you can manually exit the loop with one of:
+Once means that we just wait for some events to become active, then run active events until there are no more, then return. The non-blocking option means we won't wait for events to trigger: we'll check if they're ready, run them if so, and skip them if not. And normally the behaviour is to exit from the loop when there are no more events pending or active; you can turn that off with the no-exit flag. If you plan to use that, you can manually exit the loop with one of:
 
 \begin{lstlisting}[language=C]
 int event_base_loopexit(struct event_base* base, const struct timeval* tv);
@@ -187,7 +187,7 @@ void main_loop( evutil_socket_t fd1, evutil_socket_t fd2 ){
         struct timeval five_seconds = {5,0};
         struct event_base *base = event_base_new();
 
-        /* The caller has already set up fd1, fd2 somehow, and make them nonblocking. */
+        /* The caller has already set up fd1, fd2 somehow, and made them nonblocking. */
 
         ev1 = event_new(base, fd1, EV_TIMEOUT|EV_READ|EV_PERSIST, cb_func,(char*)"Reading event");
         ev2 = event_new(base, fd2, EV_WRITE|EV_PERSIST, cb_func, (char*)"Writing event");
@@ -257,7 +257,7 @@ void eventcb(struct bufferevent *bev, short events, void *ptr) {
          /* We're connected to 127.0.0.1:8080.   Ordinarily we'd do
             something here, like start reading or writing. */
     } else if (events & BEV_EVENT_ERROR) {
-         /* An error occured while connecting. */
+         /* An error occurred while connecting. */
     }
 }
 

@@ -271,6 +271,7 @@ int main( int argc, char** argv ) {
     }
     if ( atoi( argv[1]) < 0 ) {
         printf( "%d must be >= 0.\n", atoi(argv[1]) );
+        return -1;
     }
 
     for ( int i = 0; i < 3; ++i ) {
@@ -463,7 +464,7 @@ int main( int argc, char** argv ) {
 
 	Add to that the setup and cleanup time of 0.4~s and we get a total time of 2.7~s.
 
-	Completing the task in 2.7~s rather than 5~s represents a speedup of about~46\%.
+	Completing the task in 2.7~s rather than 5~s represents a time reduction of about~46\%.
 
 \end{frame}
 

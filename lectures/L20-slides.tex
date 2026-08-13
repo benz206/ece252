@@ -657,7 +657,7 @@ Is there a risk of deadlock here? How about starvation?
 
 	There are two kinds of thread, \texttt{oxygen()} and \texttt{hydrogen()}.
 
-	As you will recall from basic chemistry, water, H$_{2}$O, requires two hydrogen modules and one oxygen module.
+	As you will recall from basic chemistry, water, H$_{2}$O, requires two hydrogen atoms and one oxygen atom.
 
 	To assemble the desired molecule (water) a group rendezvous pattern is needed to make each thread wait until all ingredients are present in the correct amounts.
 
@@ -675,7 +675,7 @@ Is there a risk of deadlock here? How about starvation?
 
 	The code for the creation of those two types of threads is not shown.
 
-	The reusable two-phase barrier from earlier has also been converted into C code.
+	The barrier from earlier has also been converted into C code.
 
 	The oxygen queue and hydrogen queue start as ``locked''.
 
@@ -691,7 +691,7 @@ pthread_mutex_t barrier_mutex;
 sem_t turnstile;
 int barrier_count;
 int barrier_N;
-sem_t bond;
+sem_t bond_s;
 sem_t oxygen_queue;
 sem_t hydrogen_queue;
 \end{lstlisting}
@@ -729,7 +729,7 @@ void barrier_exit( ) {
 
 	\begin{lstlisting}[language=C]
 void* oxygen( void* ignore ) {
-  sem_wait( &bond );
+  sem_wait( &bond_s );
   oxygen++;
   
   if( hydrogen >= 2 ){
@@ -739,7 +739,7 @@ void* oxygen( void* ignore ) {
     sem_post( &oxygen_queue );
     oxygen--;
   } else {
-    sem_post( &bond );
+    sem_post( &bond_s );
   }
   
   sem_wait( &oxygen_queue );
@@ -748,9 +748,9 @@ void* oxygen( void* ignore ) {
   barrier_enter();
   barrier_exit();
 
-  sem_post( &bond );
+  sem_post( &bond_s );
   
-  pthread_exit( NULL )
+  pthread_exit( NULL );
 }
 \end{lstlisting}
 \end{frame}
@@ -760,17 +760,17 @@ void* oxygen( void* ignore ) {
 	\frametitle{Water is Life}
 	\begin{lstlisting}[language=C]
 void* hydrogen( void* ignore ) {
-  sem_wait( &bond );
+  sem_wait( &bond_s );
   hydrogen++;
   
-  if( hydrogen >= 2 && oxygen >= 1 )
+  if( hydrogen >= 2 && oxygen >= 1 ) {
     sem_post( &hydrogen_queue );
     sem_post( &hydrogen_queue );
     hydrogen -= 2;
     sem_post( &oxygen_queue );
     oxygen--;
   } else {
-    sem_post( &bond );
+    sem_post( &bond_s );
   }
   
   sem_wait( &hydrogen_queue );
@@ -779,7 +779,7 @@ void* hydrogen( void* ignore ) {
   barrier_enter();
   barrier_exit();
   
-  pthread_exit( NULL )
+  pthread_exit( NULL );
 }
 \end{lstlisting}
 \end{frame}
@@ -805,7 +805,7 @@ void* hydrogen( void* ignore ) {
 
 	Whoever waited on \texttt{bond} does not matter, as long as one of the threads that went into the water molecule posts on it before leaving.
 
-	As the chemical composition of water has one oxygen, the job is assigned to this molecule.
+	As the chemical composition of water has one oxygen, the job is assigned to this atom.
 
 \end{frame}
 

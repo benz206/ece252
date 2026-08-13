@@ -90,7 +90,7 @@
 \begin{frame}
 	\frametitle{Named Pipes}
 
-	A UNIX pipe may be stored on disk.
+	A UNIX pipe may be given a name on disk.
 
 	When this happens, we call it a \alert{named pipe}.
 
@@ -108,7 +108,7 @@
 
 	You may have worked with pipes on the UNIX command line.
 
-	A command like \texttt{ cat fork.c | less } creates a pipe;.
+	A command like \texttt{ cat fork.c | less } creates a pipe.
 
 	It takes the output of the \texttt{cat} program and delivers it as input to \texttt{less}.
 
@@ -286,7 +286,7 @@ int shmget( key_t key, size_t size, int shmflg );
 
 	\texttt{size}: how many bytes of memory are to be shared.
 
-	\texttt{shmflg}: access permissions (UNIX standards, eg 600)\\
+	\texttt{shmflg}: access permissions (UNIX standards, eg 0600)\\
 	\quad Optional: \texttt{IPC\_CREAT}, \texttt{IPC\_EXCL}
 
 	Return value: the integer ID of the shared memory segment.
@@ -403,7 +403,7 @@ int main( int argc, char** argv ) {
 	
 	Concern: can anyone who knows the key/ID attach to my shared memory?
 	
-    No - it's only possible to attach to memory segments of your own processes. 
+    No - it's only possible to attach to memory segments of your own processes or those where the permission bits allow it.
 	
     A process run by user j999doe can only attach to memory shared by another process run by that user.
 
@@ -424,7 +424,7 @@ int main( int argc, char** argv ) {
 
 
 \begin{frame}
-	\frametitle{Altenative: \texttt{mmap()}}
+	\frametitle{Alternative: \texttt{mmap()}}
 
 	An alternative approach for shared memory involves the use of \texttt{mmap()}, a function nominally used to map a file into memory.
 
@@ -458,7 +458,7 @@ void* mmap( void* address, size_t length, int protection, int flag,
 \begin{frame}
 	\frametitle{Protection Flags}
 
-	Valid values are \texttt{PROT\_NONE}, \texttt{PROT\_READ}, \texttt{PROT\_WRITE}, and \texttt{PROT\_EXECUTE}.
+	Valid values are \texttt{PROT\_NONE}, \texttt{PROT\_READ}, \texttt{PROT\_WRITE}, and \texttt{PROT\_EXEC}.
 
 	They can be combined with the bitwise OR operator.
 

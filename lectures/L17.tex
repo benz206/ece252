@@ -6,7 +6,7 @@
 
 \section*{The Dining Philosophers Problem}
 
-The dining philosophers problem was also proposed by Dijkstra in 1965. The problem can be formulated with $n$ philosophers, but problem is typically described as involving five philosophers. The description that follows is from~\cite{osc}. These five smart individuals spend their lives thinking, but every so often, they need to eat. They share a table, each having his or her own chair. In the centre of the table is a bowl of rice, and the table is laid with five single chopsticks. See the diagram below.
+The dining philosophers problem was also proposed by Dijkstra in 1965. The problem can be formulated with $n$ philosophers, but the problem is typically described as involving five philosophers. The description that follows is from~\cite{osc}. These five smart individuals spend their lives thinking, but every so often, they need to eat. They share a table, each having his or her own chair. In the centre of the table is a bowl of rice, and the table is laid with five single chopsticks. See the diagram below.
 
 \begin{center}
 	\includegraphics[width=0.4\textwidth]{images/philosopher-table.png}\\
@@ -33,7 +33,7 @@ The dining philosophers problem is a good springboard from which to launch into 
 \section*{Deadlock}
 We have already introduced the subject of deadlock and gave an informal definition as all processes being ``stuck'' (unable to proceed). A more formal definition is given in~\cite{osi}: ``the \textit{permanent} blocking of a set of processes that either compete for system resources or communicate with each other''. There is emphasis on permanent. It may be possible for all processes to be stuck temporarily, because one is waiting for some event (e.g., a read from disk), but this situation will resolve itself and is not deadlock. A set of processes is truly deadlocked when each process in the set is blocked on some event that can only be triggered by another blocked process in the set. In this case it is permanent, because none of the events can take place.
 
-A deadlock involves some conflicting needs for resources by two or more processes. Consider a traffic deadlock. Suppose four cars arrive at a four-way stop intersection at the same time. We can divide the intersection into four quadrants, labelled, a, b, c, and d. To drive straight through the intersection, any one vehicle will need at least two of the quadrants (the two directly in front of it).
+A deadlock involves some conflicting needs for resources by two or more processes. Consider a traffic deadlock. Suppose four cars arrive at a four-way stop intersection at the same time. We can divide the intersection into four quadrants, labelled a, b, c, and d. To drive straight through the intersection, any one vehicle will need at least two of the quadrants (the two directly in front of it).
 
 \begin{center}
 	\includegraphics[width=0.75\textwidth]{images/car-deadlock.png}\\
@@ -97,7 +97,7 @@ If there are no cycles in the graph, then we can be certain that no process in t
 	A sample resource allocation graph with a deadlock~\cite{osc}.
 \end{center}
 
-But the presence of a cycle, on its own, is not necessarily certain that there is a deadlock:
+But the presence of a cycle, on its own, is not necessarily certainty that there is a deadlock:
 
 \begin{center}
 	\includegraphics[width=0.20\textwidth]{images/rag3.png}\\
@@ -129,7 +129,7 @@ This approach is a way of preventing a deadlock from being possible. The first t
 
 When it comes to your specific program, though, you might be able to make it so that mutual exclusion is not necessary. If you can give each thread, for example, its own copy of the data,  or you can find an algorithm that no longer requires locking a given resource, then by all means, use it! Locking and other mutual exclusion constructs are things we use because we must, not because we like to.
 
-\paragraph{Hold and Wait.} To prevent the hold-and-wait condition, we must guarantee that when a process requests a resource, it does not have any other resource. In a practical sense this does not mean that things can be requested only one at a time; that would be like telling the philosophers that when they have one chopstick already, they cannot request another.
+\paragraph{Hold and Wait.} To prevent the hold-and-wait condition, we must guarantee that when a process requests a resource, it does not have any other resource. In a practical sense, this does not mean that things can only be requested only one at a time; that would be like telling the philosophers that when they have one chopstick already, they cannot request another.
 
 The operating system could operate under these rules, but we know that our usual commercial operating systems don't do this. We could imagine a world where things are different, but that's not very helpful when it comes to implementing the program we're trying to write. Even so, the idea of requesting everything up front is obviously not possible (at the time of opening a document you are not asked if you are going to use the printer sometime later, just in case), nor is giving up all resources before asking for more possible. A resource that cannot be easily released is memory, as released memory may be collected and reassigned by the operating system. Therefore we cannot release all resources, and releasing only some of the resources means that we cannot categorically rule out deadlock; we can only make it less likely to occur~\cite{mte241}.
 
@@ -180,7 +180,7 @@ The idea of a process releasing resources that it is holding is the basis for th
 
 \paragraph{No Preemption.} If we violate this condition, it means that we do have preemption: forcible removal of resources from a process, by the operating system. Suppose a process $P_{1}$ holds $R_{1}$ and $R_{2}$ and wants to get $R_{3}$, but $R_{3}$ is unavailable. $P_{1}$ will be blocked by the operating system. If another process $P_{2}$ comes by and requests $R_{1}$ and $R_{2}$, the resources $R_{1}$ and $R_{2}$ are taken away from $P_{1}$. The resources are added to the list of things that $P_{1}$ is waiting for (so it is waiting for all three now). In the meantime, $P_{2}$ can use them and continue. $P_{1}$ will be unblocked when all three resources are once again available for it to acquire~\cite{osc}.
 
-This isn't really something we can do as program designers, because only the operating system really has the power to carry out. It's included for completeness, but is not anything we can actually implement ourselves.
+This isn't really something we can do as program designers, because only the operating system really has the power to carry this out. It's included for completeness, but is not anything we can actually implement ourselves.
 
 For preemption to work, however, the resource must be a resource of a type where the state can be saved and restored (e.g., the CPU with its registers). This is not applicable to all resources; if a printer is in use by $P_{1}$ it cannot be preempted and given to $P_{2}$, otherwise the printout will be a jumble. Thus, preemption is also not sufficient to prevent deadlock from ever transpiring, it once again only makes it less likely.
 

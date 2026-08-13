@@ -86,7 +86,7 @@ int socket( int domain, int type, int protocol )
 
 	Domain: address format; \texttt{AF\_INET} (IPv4)
 
-	Type: what kind of data; \texttt{SOCK\_DGRAM} or\texttt {SOCK\_STREAM}
+	Type: what kind of data; \texttt{SOCK\_DGRAM} or \texttt{SOCK\_STREAM}
 
 	Protocol: how data is transported; 0 for default (TCP/IP).
 
@@ -215,7 +215,7 @@ addr.sin_addr.s_addr = htonl( INADDR_ANY );
 \begin{frame}[fragile]
 	\frametitle{Get Address Info!}
 
-	The function is prototyped in in \texttt{netdb.h}:
+	The function is prototyped in \texttt{netdb.h}:
 
 	\begin{lstlisting}[language=C]
 int getaddrinfo(const char *node,     // e.g. "www.example.com" or IP
@@ -258,7 +258,7 @@ freeaddrinfo( serverinfo );
 \end{lstlisting}
 
 
-	Assuming that all went well, the \texttt{serverinfo} pointer is now pointing to a linked list of \texttt{struct sockaddr}.
+	Assuming that all went well, the \texttt{serverinfo} pointer is now pointing to a linked list of \texttt{struct addrinfo}.
 
 	Most of the time we just need the first result.
 \end{frame}
@@ -347,7 +347,7 @@ int status = connect(sockfd, res->ai_addr, res->ai_addrlen);
 
 	The bind step is how we choose what port we are going to connect to.
 
-	The listen step is the part where we wait for connections from a client.
+	The listen step is the part where we are ready for connections from a client.
 
 	Then the last step is accept: establish the connection so we can start talking.
 
@@ -458,7 +458,7 @@ int accept( int sockfd, struct sockaddr *addr, socklen_t *len );
 
 	\begin{lstlisting}[language=C]
 struct sockaddr_in client_addr;
-int client_addr_size = sizeof( struct sockaddr_in );
+socklen_t client_addr_size = sizeof( struct sockaddr_in );
 int newsockfd;
 
 int socketfd = socket( AF_INET, SOCK_STREAM, 0 );

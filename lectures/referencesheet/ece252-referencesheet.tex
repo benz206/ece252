@@ -36,21 +36,6 @@
 
 \lstset{basicstyle=\footnotesize\ttfamily,breaklines=true}
 
-\newcommand{\handout}[5]{
-  \noindent
-  \begin{center}
-  \framebox{
-    \vbox{
-      \hbox to 5.78in { {\bf ECE254: Operating Systems and Systems Programming } \hfill #2 }
-      \vspace{4mm}
-      \hbox to 5.78in { {\Large \hfill #4  \hfill} }
-      \vspace{2mm}
-      \hbox to 5.78in { {\em #3 \hfill} }
-    }
-  }
-  \end{center}
-  \vspace*{4mm}
-}
 
 \newcommand{\lecture}[3]{\handout{#1}{#2}{#3}{Lecture #1}}
 \newcommand{\tuple}[1]{\ensuremath{\left\langle #1 \right\rangle}\xspace}
@@ -67,7 +52,7 @@
 
 \singlespace
 
-\newcommand{\vclass}{ECE 252 Spring 2019}
+\newcommand{\vclass}{ECE 252}
 \newcommand{\vtitle}{Function \& Library Reference}
 %\newcommand{\vpage}{1}
 %\newcommand{\vqcount}{2 }
@@ -98,14 +83,14 @@
 \lstset{numbers=none}
 
 \begin{lstlisting}[language=C]
-void* malloc( int num_bytes );
+void* malloc( size_t num_bytes );
 void* calloc( size_t num, size_t size );
 void *realloc( void *ptr, size_t new_size );
 void free( void* p );
 int atoi( const char *s ); /* Convert string to int */
 int printf( const char * fmt, ... ); /* %d int, %lu unsigned long, %f double,  %s string, \n newline, ...=args */
 void* memcpy( void *destination, const void *source, size_t num_bytes ); /* Returns destination */
-void *memset( void *mem, int value, size_t num_bytes ); /* Set memory to 0 */
+void *memset( void *mem, int value, size_t num_bytes ); /* Set memory to value, byte-wise */
 size_t strlen( const char * string ); /* returns length of null-terminated string, not counting the terminator */
 int strncmp ( const char * str1, const char * str2, size_t max_size ); /* return 0 if strings equal */
 \end{lstlisting}
@@ -159,8 +144,8 @@ When opening a file with \texttt{fopen()}, the options are:\\
 	\texttt{r} & Open the file read-only. \\ \hline
 	\texttt{w} & Open the file for writing (create if needed) \\ \hline
 	\texttt{a} & Open the file for appending (create if needed) \\ \hline
-	\texttt{r+} & Open the file for reading, from the start \\ \hline
-	\texttt{w+} & Open the file for writing (overwrite) \\ \hline
+	\texttt{r+} & Open for reading and writing. The stream is positioned at the beginning of the file. \\ \hline
+	\texttt{w+} & Open for reading and writing. The file is created if it does not exist, otherwise it is truncated. \\ \hline
 	\texttt{a+} & Open the file for reading and writing, append if exists \\
 \end{tabular}
 
@@ -228,7 +213,7 @@ void* shmat( int shmid, const void* shmaddr, int shmflg ); /* NULL for shmaddr a
 int shmdt( const void* shmaddr );
 int shmctl( int shmid, int cmd, struct shmid_ds *buf ); /* Use cmd = IPC_RMID and buf = NULL to delete */
 void* mmap( void* address, size_t length, int protection, int flag, int fd, off_t offset ); /* address = NULL */
-int mprotect( void* address, size_t length, int prot ); /* PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXECUTE */
+int mprotect( void* address, size_t length, int prot ); /* PROT_NONE, PROT_READ, PROT_WRITE, PROT_EXEC */
 int msync( void* address, size_t length, int flags ); /* Use MS_SYNC for flags */
 int munmap( void* address, size_t length );
 \end{lstlisting}
@@ -250,7 +235,7 @@ int listen( int sockfd, int backlog );
 int accept( int sockfd, struct sockaddr *addr, socklen_t *len );
 int send( int sockfd, const void* msg, int length, int flags );
 int recv( int sockfd, void * buffer, int length, int flags );
-int sendto( int sfd, const void* msg, int len, unsigned int flags, const struct sockaddr* to, socklen_t token );
+int sendto( int sfd, const void* msg, int len, unsigned int flags, const struct sockaddr* to, socklen_t tolength );
 int recvfrom( int sfd, void* buffer, int len, unsigned int flags, struct sockaddr* from, int* fromlength );
 
 CURLcode curl_global_init( long flags ); /* use CURL_GLOBAL_DEFAULT as flags */
@@ -316,7 +301,7 @@ pthread_rwlock_destroy( pthread_rwlock_t * rwlock );
 sem_init( sem_t* semaphore, int shared, int initial_value); /* 0 for shared OK */
 sem_destroy( sem_t* semaphore );
 sem_wait( sem_t* semaphore );
-sem_trywait( semt_t* semaphore );
+sem_trywait( sem_t* semaphore );
 sem_post( sem_t* semaphore );
 
 pthread_cond_init( pthread_cond_t *cv, pthread_condattr_t *attributes );

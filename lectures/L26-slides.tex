@@ -363,13 +363,13 @@ while( !quit ) {
     } else if ( res == 0 ) { /* 0 sockets had events occur */
       printf( "Still waiting; nothing occurred recently.\n" );
     } else { /* Things happened */
-      if ( FD_ISSET( service1_sock, &s ) {
+      if ( FD_ISSET( service1_sock, &s ) ) {
         service1_activate( ); 
       }
-      if ( FD_ISSET( service2_sock, &s ) {
+      if ( FD_ISSET( service2_sock, &s ) ) {
         service2_activate( ); 
       }
-      if ( FD_ISSET( service3_sock, &s ) {
+      if ( FD_ISSET( service3_sock, &s ) ) {
         service3_activate( ); 
       }
   }
@@ -486,7 +486,7 @@ struct timespec {
 };
 \end{lstlisting}
 
-	So, seconds and nanoseconds instead of seconds and milliseconds.
+	So, seconds and nanoseconds instead of seconds and microseconds.
 
 	And a signal mask!
 
@@ -621,9 +621,9 @@ void listen_for_connections( int service1_sock, int service2_sock,
 	\begin{lstlisting}[language=C]
   while( !quit ) {
     
-    int res = poll( &pollfds, 3, timeout );
+    int res = poll( pollfds, 3, timeout );
     if ( res == -1 ) { /* An error occurred */
-      printf( "An error occurred in select(): %s.\n", strerror( errno ) );
+      printf( "An error occurred in poll(): %s.\n", strerror( errno ) );
       quit = 1;
     } else if ( res == 0 ) { /* 0 sockets had events occur */
       printf( "Still waiting; nothing occurred recently.\n" );

@@ -58,7 +58,7 @@ You want to be a great programmer, don't you? Still, I have to be honest. This c
 
 \section*{Our C Toolkit}
 
-This is a programming course, after all, and we will be programming in C. There's a baseline assumption that you have experience with a C-like language (if not C itself), such as \Cpp, Java, C\#. While the purpose of this class it not to teach you how to program in C, past experience (from ECE 254) suggests that it is helpful to cover a number of key concepts and conventions in C programming to make sure that everyone is on the same page, and to streamline explanation of future code examples. It is also probably desirable to put all of these things together in the same place for quick reference.
+This is a programming course, after all, and we will be programming in C. There's a baseline assumption that you have experience with a C-like language (if not C itself), such as \Cpp, Java, C\#. While the purpose of this class is not to teach you how to program in C, past experience (from ECE 254) suggests that it is helpful to cover a number of key concepts and conventions in C programming to make sure that everyone is on the same page, and to streamline explanation of future code examples. It is also probably desirable to put all of these things together in the same place for quick reference.
 
 C is a procedural language: that is to say it has functions (but that doesn't make it a functional programming language). It is not Object-Oriented or anything like it. We will write functions and functions work as they do in all C-like languages. They have a return type, function name, and then a list of arguments (or parameters) in parenthesis.
 
@@ -107,7 +107,7 @@ int bar( int v1, int v2 ) {
 
 The function prototype appears earlier in the file and promises the compiler that at some point there will be an implementation of this function, but be aware that it exists. This will now allow compilation to succeed. Function prototypes are frequently declared all at the top of the file.
 
-In another ancient rule based on no second passes, versions of C before the C99 standard do not allow declaring of variables in a function anywhere but at the very start of the function. This means that in the example below, \texttt{loop1} will not compile but \texttt{loop2} will.  Fortunately we will always assume (at least) C99 standard so this problem is avoided.
+In another ancient rule based on no second passes, versions of C before the C99 standard do not allow declaring of variables anywhere but at the very start of the block. This means that in the example below, \texttt{loop1} will not compile but \texttt{loop2} will.  Fortunately we will always assume (at least) C99 standard so this problem is avoided.
 
 \begin{lstlisting}[language=C]
 void loop1() {
@@ -119,7 +119,7 @@ void loop2() {
 }
 \end{lstlisting}
 
-\paragraph{Comments.} In C comments always begin with \texttt{/*} and end with \texttt{*/}. The style of comment like \texttt{// This is a comment} may be permitted by your compiler but this is not supported everywhere. Please use C-style comments.
+\paragraph{Comments.} In old-style C comments always begin with \texttt{/*} and end with \texttt{*/}. The style of comment like \texttt{// This is a comment} is permitted in C99 and above. All good.
 
 \paragraph{Structures.} Perhaps the most striking difference in C for those coming from an Object-Oriented Programming language is that C has no such concept. There are no classes, and no class hierarchy, no interfaces or abstract classes, none of that. There are no access control modifiers (\texttt{public, private}, etc).
 
@@ -200,7 +200,7 @@ Global variables are variables declared outside of any function. Although they c
 
 In C, heap memory is allocated in a very simple way: you ask for the amount of memory that you want. The function for this is \texttt{malloc()} and it takes one parameter -- the number of bytes of memory that you want. So if we want to allocate an integer on the heap, we need to call \texttt{malloc()} and request the number of bytes that correspond to an \texttt{int}. But how many bytes is that?
 
-You may think the answer is 4 bytes, but a quick look at the C standard says that while there are are exact sizes for some types, other types have only a minimum size. The rest is implementation specific. That is, it can vary from one system to another. Yikes! Fortunately we have \texttt{sizeof}, which ask the compiler to help us out here and substitute in the correct size where it is needed. So we would call \texttt{malloc()} with the argument \texttt{sizeof( int )}. At run time, the correct amount of memory will be requested.
+You may think the answer is 4 bytes, but a quick look at the C standard says that while there are exact sizes for some types, other types have only a minimum size. The rest is implementation specific. That is, it can vary from one system to another. Yikes! Fortunately we have \texttt{sizeof}, which asks the compiler to help us out here and substitute in the correct size where it is needed. So we would call \texttt{malloc()} with the argument \texttt{sizeof( int )}. At run time, the correct amount of memory will be requested.
 
 This is also very helpful for when you want to allocate a structure. Instead of needing to work out the size yourself (well, this is three \texttt{double}s, and a \texttt{double} is 8 bytes...), \texttt{sizeof( point\_t )} will allocate the correct size... as a nice bonus, if ever the definition of the structure is changed the amount of memory requested is updated automatically.
 
@@ -303,14 +303,14 @@ Now the stack has an array named \texttt{array} of capacity 10 integers, all of 
 int* array = malloc( 10 * sizeof( int ) );
 \end{lstlisting}
 
-This looks weird, but this is how we do it we asked for enough memory to hold 10 integers and this will be our array. But yes, an integer pointer could point to only one integer or to an array of integers. When deallocating this memory, the call is still \texttt{free( array ) } (unlike \Cpp there's no difference when deallocating an array).
+This looks weird, but this is how we do it. We asked for enough memory to hold 10 integers and this will be our array. But yes, an integer pointer could point to only one integer or to an array of integers. When deallocating this memory, the call is still \texttt{free( array ) } (unlike \Cpp there's no difference when deallocating an array).
 
 Either way, to assign elements of the array we use the square brackets operators, like \texttt{array[0] = 5;}. There's no difference in whether or not it is stack or heap allocated when we do this.
 
 As said, the array needs to be initialized, regardless of whether it is stack or heap allocated. The simple way would be a for loop:
 
 \begin{lstlisting}[language=C]
-int * array = malloc( 10 * sizeof( int ) );
+int * a = malloc( 10 * sizeof( int ) );
 for ( int i = 0; i < 10; i++ ) {
   a[i] = 0;
 }
@@ -323,11 +323,11 @@ int * array = malloc( 10 * sizeof( int ) );
 memset( array, 0, 10 * sizeof( int ) );
 \end{lstlisting}
 
-There are no automatic bounds checking for arrays, and C will gladly let you try to read the 12th element of a capacity-10 array. You will either read garbage or perhaps crash your program. When iterating over an array, you will need to know in advance how long the array is so you know when to terminate the loop. For that reason, when an array is passed as an argument to a function, another variable is used to specify the length.
+There is no automatic bounds checking for arrays, and C will gladly let you try to read the 12th element of a capacity-10 array. You will either read garbage or perhaps crash your program. When iterating over an array, you will need to know in advance how long the array is so you know when to terminate the loop. For that reason, when an array is passed as an argument to a function, another variable is used to specify the length.
 
 \paragraph{Strings.}
 
-As far as C is concerned, a string is just a character array (and is generally just \texttt{char*}. In C, a string is of arbitrary length and terminates with a byte of zero (or if you prefer, \texttt{NULL}). This is distinct from the character ``0'' which has a nonzero value. If you put a string literal in some code like \texttt{"Hello World"} then the compiler will graciously add the null-terminator for you. If you are composing a string, however, then you need to remember to add it (and the char for it is \texttt{'\textbackslash0'}). And either way you should also remember to make room for the null terminator when allocating memory or calculating the length of a string.
+As far as C is concerned, a string is just a character array (and is generally just \texttt{char*}). In C, a string is of arbitrary length and terminates with a byte of zero (or if you prefer, \texttt{NULL}). This is distinct from the character ``0'' which has a nonzero value. If you put a string literal in some code like \texttt{"Hello World"} then the compiler will graciously add the null-terminator for you. If you are composing a string, however, then you need to remember to add it (and the char for it is \texttt{'\textbackslash0'}). And either way you should also remember to make room for the null terminator when allocating memory or calculating the length of a string.
 
 \paragraph{Function Convention.}
 
@@ -335,7 +335,7 @@ Because there are no member functions for data objects the convention is general
 
 \begin{lstlisting}[language=C]
 int initialize_header( struct header * h, int v1, double v2, struct blah * v3 );
-void addToPoint( point p1, point p2 );
+void addToPoint( point_t p1, point_t p2 );
 \end{lstlisting}
 
 This is not a firm rule and there are examples that contradict this. But it is convention and will be seen frequently.
@@ -365,15 +365,15 @@ int x = -25;
 printf("The value of x is %d\n", x);
 \end{lstlisting}
 
-Results in printing to the console \texttt{The value of x is -25} (and a newline character after it). In this example the format specifier \texttt{\%d} is used for a signed integer (or \texttt{\%i} would do the same). There are different format specifiers for different types: unsigned integers, floating point numbers, scientific notation, even a string. There are many options but we do not wish to belabour the point by putting them all here. But be sure you chose the right one: if you have a \texttt{double} and you try to print it with an \texttt{int} format specifier, it will look like the data contains garbage (yes, I have helped someone debug this).
+Results in printing to the console \texttt{The value of x is -25} (and a newline character after it). In this example the format specifier \texttt{\%d} is used for a signed integer (or \texttt{\%i} would do the same). There are different format specifiers for different types: unsigned integers, floating point numbers, scientific notation, even a string. There are many options but we do not wish to belabour the point by putting them all here. But be sure you choose the right one: if you have a \texttt{double} and you try to print it with an \texttt{int} format specifier, it will look like the data contains garbage (yes, I have helped someone debug this).
 
 Or another example:
 \begin{lstlisting}[language=C]
-point p1 = malloc( sizeof( point ) );
+point_t *p1 = malloc( sizeof( point_t ) );
 p1->x = 9.5;
 p1->y = -5.4;
 p1->z = 0.1;
-printf("(%f, %f, %f)\n", p1->x, p1->y, p1->z);
+printf("(%.1f, %.1f, %.1f)\n", p1->x, p1->y, p1->z);
 \end{lstlisting}
 
 Results in printing \texttt{(9.5, -5.4, 0.1)}. As you see, the \texttt{printf()} routine takes an arbitrary number of parameters. If the string contains 5 format specifiers, then the string is followed by five arguments. If the string contains 10 format specifiers, then there are 10 arguments after the string. If you have 3 format specifiers but only 2 arguments after the string, \texttt{printf()} will take whatever value is next on the stack which may be garbage.

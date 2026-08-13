@@ -77,7 +77,7 @@ struct inotify_event {
 };
 \end{lstlisting}
 
-The first returned value is which file descriptor it was the event happened on, as we'd expect. The second says what kind of event occurred. The third parameter is a delicious, delicious cookie: it allows you to identify a rename operation (if a file is renamed in the directory, this shows up as two events and the cookie is used to link the two). The length field tells you how long the name array is, and then there is of course the name array. That means memory size of an inotify event is thus the structure size plus the length of the array, i.e.: \texttt{sizeof( struct inotify\_event) + len}~\cite{lpi}.
+The first returned value is which watch descriptor it was the event happened on, as we'd expect. The second says what kind of event occurred. The third parameter is a delicious, delicious cookie: it allows you to identify a rename operation (if a file is renamed in the directory, this shows up as two events and the cookie is used to link the two). The length field tells you how long the name array is, and then there is of course the name array. That means memory size of an inotify event is thus the structure size plus the length of the array, i.e.: \texttt{sizeof( struct inotify\_event) + len}~\cite{lpi}.
 
 This is something somewhat rare -- usually when we do a read we need to know how many bytes we'd like to read. If we're reading a struct, we know the size of the struct, but now it depends on the length of the data you get back. Your standard clairvoyance problem. One approach is to just make the buffer really big: much bigger than it needs to be. The length of the largest filename plus one (for the null terminator) would work. If your buffer isn't big enough the read call will fail.
 
@@ -101,9 +101,9 @@ int main( int argc, char** argv ) {
     bool our_turn = false;
     
     while( !our_turn ) {
-        lockFD = open( filename, O_CREAT | O_EXCL );
+        lockFD = open( filename, O_CREAT | O_EXCL | O_WRONLY, 0644 );
         if ( lockFD == -1 ) {
-            printf( "The lock file exists and process %ld will wait its turn...\n", getpid() ); 
+            printf( "The lock file exists and process %d will wait its turn...\n", getpid() ); 
             int notifyFD = inotify_init( );
             uint32_t watched = inotify_add_watch( notifyFD, filename, IN_DELETE_SELF );
             
@@ -122,12 +122,12 @@ int main( int argc, char** argv ) {
             printf("Event occurred!\n");
 
             free( event_buffer );
-            inotify_rm_watch( lockFD, watched );
+            inotify_rm_watch( notifyFD, watched );
             close( notifyFD );
         } else {
             char* pid = malloc( 32 );
             memset( pid, 0, 32 );
-            int bytes_of_pid = sprintf( pid, "%ld", getpid() );
+            int bytes_of_pid = sprintf( pid, "%d", getpid() );
 
             write( lockFD, pid, bytes_of_pid ); 
             free ( pid );
@@ -136,7 +136,7 @@ int main( int argc, char** argv ) {
         }
     } 
 
-    printf("Process %ld is in the area protected by file lock.\n", getpid());
+    printf("Process %d is in the area protected by file lock.\n", getpid());
     remove( filename );
     return 0;
 }
@@ -169,7 +169,7 @@ The APFS does potentially harm the most common ``backup'' system of non-technica
 Somewhat like ZFS, the APFS approach to avoiding inconsistent data amidst a crash is something like copy-on-write, though in typical Apple fashion they were pretty vague about what this means in a practical sense; the APFS lead developer Dominic Giampaolo just says it's a ``novel copy-on-write metadata scheme'' but also somehow not exactly the same as ZFS's single-atomic-update approach~\cite{apfs}.
 
 \subsection*{NTFS (Windows File System)}
-Though UNIX and similar systems have often been a focus of the examples, in this case, we will instead examine NTFS, the default file system for Windows since Windows NT and used in 2000, XP, Vista, 7, 8, 10... NTFS supports large disks and large files, and uses journalling.
+Though UNIX and similar systems have often been a focus of the examples, in this case, we will instead examine NTFS, the default file system for Windows since Windows NT and used in 2000, XP, Vista, 7, 8, 10, 11... NTFS supports large disks and large files, and uses journalling.
 
 A volume is laid out as follows:
 
@@ -178,7 +178,7 @@ A volume is laid out as follows:
 	Standard layout of an NTFS volume~\cite{osi}.
 \end{center}
 
-The Master File Table (MFT) contains information about all the files and folders. Following the that, a block is allocated to system files that contain some important system information~\cite{osi}:
+The Master File Table (MFT) contains information about all the files and folders. Following that, a block is allocated to system files that contain some important system information~\cite{osi}:
 
 \begin{enumerate}
 	\item \textbf{MFT2}: Mirror of the first few rows of the MFT (in case the original is damaged).

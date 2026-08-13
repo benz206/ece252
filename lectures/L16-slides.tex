@@ -320,7 +320,7 @@
 
 	We will probably want to break up the \texttt{roomEmpty} semaphore into \texttt{noReaders} and \texttt{noWriters}.
 
-	A reader in the critical section should hold the \texttt{noReaders} semaphore and a writer should hold \texttt{noWriters} and \texttt{noReaders}.
+	A reader in the critical section should hold the \texttt{noWriters} semaphore and a writer should hold \texttt{noWriters} and \texttt{noReaders}.
 
 \end{frame}
 
@@ -472,7 +472,7 @@ pthread_rwlock_unlock( pthread_rwlock_t * rwlock )
 \begin{frame}
 	\frametitle{Mine, Mine, Mine!}
 
-	In theory, the same thread may lock the same rwlock $n$ times.
+	In theory, the same thread may lock the same rwlock for reading $n$ times.
 
 	Just remember to unlock it $n$ times as well.
 
@@ -518,7 +518,7 @@ void* reader( void* read ) {
     sem_wait( &roomEmpty );
   }
   pthread_mutex_unlock( &mutex );
-  read_data( arg );
+  read_data( read );
   pthread_mutex_lock( &mutex );
   readers--;
   if ( readers == 0 ) {
@@ -561,7 +561,7 @@ void* writer( void* arg ) {
 
 void* reader( void* read ) {
   pthread_rwlock_rdlock( &rwlock );
-  read_data( arg );
+  read_data( read );
   pthread_rwlock_unlock( &rwlock );
 }
 \end{lstlisting}

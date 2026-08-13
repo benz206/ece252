@@ -68,7 +68,7 @@ It turns out that creating, reading, writing, and truncating all involve the ope
 
 \begin{itemize}
 	\item \texttt{r} -- Open text file for reading. The stream is positioned at the beginning of the file.
-	\item \texttt{w} --Truncate file to zero length or create text file for writing. The stream is positioned at the beginning of the file.
+	\item \texttt{w} -- Truncate file to zero length or create text file for writing. The stream is positioned at the beginning of the file.
 	\item \texttt{a} -- Open for appending (writing at end of file). The file is created if it does not exist. The stream is positioned at the end of the file.
 	\item \texttt{r+} -- Open for reading and writing. The stream is positioned at the beginning of the file.
 	\item \texttt{w+} -- Open for reading and writing. The file is created if it does not exist, otherwise it is truncated. The stream is positioned at the beginning of the file.
@@ -77,11 +77,11 @@ It turns out that creating, reading, writing, and truncating all involve the ope
 
 If we combine this with a \texttt{b}, such as \texttt{rb} then we are opening the file as a binary file. Also, as of the C 2011 standard, there is a new add-on \texttt{x} which can be used to make any write operation fail if the file exists.
 
-\paragraph{Repositioning within a File.} Since a file may be read or written, but usually only one at a time, the pointer for the write location may in fact be the same pointer for the memory location. If so, we might call it a current position pointer, and this operation is just repositioning it within the file. Repositioning is also sometimes called a seek operation.
+\paragraph{Repositioning within a File.} Since a file may be read or written, but usually only one at a time, the pointer for the write location may in fact be the same pointer for the read location. If so, we might call it a current position pointer, and this operation is just repositioning it within the file. Repositioning is also sometimes called a seek operation.
 
-In C this is done with the \texttt{fseek()} call. This adjusts the pointer for reading or writing. This should be done with caution though, because you can go to an arbitrary location, even the middle of a two (or more) byte character. And we can't seek when a file is opened for append.
+In C this is done with the \texttt{fseek()} call. This adjusts the pointer for reading or writing. This should be done with caution though, because you can go to an arbitrary location, even the middle of a two (or more) byte character. And we can't seek for writing when a file is opened for append.
 
-Generally -- seeking in the file is only necessary if you want to ``skip ahead`` or go back in the file; if you read $n$ bytes of the file, that advances the read pointer for you automatically; if you read 48 bytes and then seek 48 bytes forward, at the end of both operations your pointer is 96 bytes away from where it started.
+Generally -- seeking in the file is only necessary if you want to ``skip ahead'' or go back in the file; if you read $n$ bytes of the file, that advances the read pointer for you automatically; if you read 48 bytes and then seek 48 bytes forward, at the end of both operations your pointer is 96 bytes away from where it started.
 
 \paragraph{Deleting a File.} Deletion works pretty much as we would expect: find the file, mark its space as free, and remove it from the directory listing. This is a ``simple'' deletion and it does not actually get rid of any of the data, it just makes the file system forget the existence of the file. However, it might be possible to recover the data if the space it previously occupied has not been overwritten. This is a bit like a freed pointer in C possibly still being accessible. Some systems offer a more secure deletion routine that overwrites the space the file used to occupy with zeros.
 
@@ -123,9 +123,9 @@ This example locks the file exclusively. A shared lock would be \texttt{LOCK\_SH
 Writing to a file is easy enough because it works like \texttt{printf}. In fact, the function call for it is \texttt{fprintf} and the only real difference between that and \texttt{printf} is that the first argument to this is the file pointer where you'd like the data to be written to:
 
 \begin{lstlisting}[language=C]
-void write_points_to_file( point* p, FILE f ) {
+void write_points_to_file( point* p, FILE* f ) {
   while( p != NULL ) {
-    fprintf(f, "(%d, %d, %d)\n", p->x, p->y, p->z);
+    fprintf(f, "(%.1f, %.1f, %.1f)\n", p->x, p->y, p->z);
     p = p->next;
   }
 }
@@ -210,7 +210,7 @@ Permissions can also be written in octal (base 8) where r = 4, w = 2, and x = 1.
 
 There are some more details like what the permissions mean on directories, and some advanced topics like \texttt{setuid}, \texttt{setgid}, and ``sticky bit'', but we will not cover them in this course.
 
-The obvious shortcoming of this approach is that it is very coarse-grained: there are only three groups for whom we can specify permissions. Within Linux and other similar systems there is a trend now towards using SELinux (Security Enhanced Linux) which is an Access Control List system. For the moment we'll leave off the discussion of access control lists and just proceed forward.
+The obvious shortcoming of this approach is that it is very coarse-grained: there are only three groups for whom we can specify permissions. This is something we'll revisit in the next course.
 
 \input{bibliography.tex}
 

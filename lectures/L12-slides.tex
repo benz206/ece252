@@ -181,7 +181,7 @@
 \begin{frame}
 	\frametitle{Heisenbugs}
 
-	This is, what is referred to as a ``Heisenbug''.
+	This is what is referred to as a ``Heisenbug''.
 
 	This has nothing to do with the ``Breaking Bad'' TV show.
 
@@ -202,7 +202,7 @@
 	\frametitle{Shared Data and Atomic Operations}
 	We noted earlier that the need for co-ordination in inter-process communication arises from the fact that some area of memory is shared.
 
-	We also know that all the threads of a process share the same data:.
+	We also know that all the threads of a process share the same data.
 
 	Simple example of a shared variable \texttt{x} is manipulated by two threads $A$ and $B$:
 
@@ -583,7 +583,7 @@
 	Its semantics in C are:
 
 	\begin{verbatim}
-boolean test_and_set( int* i ) {
+bool test_and_set( int* i ) {
   if ( *i == 0 ) {
     *i = 1;
     return true;
@@ -601,7 +601,7 @@ boolean test_and_set( int* i ) {
 	Now let us put it into action.
 
 	\begin{verbatim}
-while ( !test_and_set( busy ) ) {
+while ( !test_and_set( &busy ) ) {
    /* Wait for my turn */
 }
 /* critical section */

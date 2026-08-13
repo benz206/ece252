@@ -17,7 +17,7 @@ As we discussed much earlier, the \texttt{read} call is blocking, as expected. S
 
 If you are waiting for the bus, do you stare off blankly into space while waiting for it to arrive? Probably not. More likely you pull out your phone and start to use it for something. Whether that is productive or not (e.g., answering a project e-mail or liking posts on Facebook) is up to you, but you are doing something and making use of the time.
 
-Our main solution until now is threads: if one thread gets blocked on the I/O the other ones can continue and is fine. But maybe you don't want to use threads, or maybe you can't due to: race conditions, thread stack size overhead, or limitations on the maximum number of threads. The last one might seem ridiculous, but in some embedded system you may not have the option to make new threads (or at least not as many as you want).
+Our main solution until now is threads: if one thread gets blocked on the I/O the other ones can continue and are fine. But maybe you don't want to use threads, or maybe you can't due to: race conditions, thread stack size overhead, or limitations on the maximum number of threads. The last one might seem ridiculous, but in some embedded system you may not have the option to make new threads (or at least not as many as you want).
 
 Sometimes, also, your programming language (e.g., Javascript) doesn't allow you to make multiple threads and you really have no choice but to use asynchronous I/O. It's a useful tool to have in the toolbox so let's get into it.
 
@@ -69,7 +69,7 @@ When we create a new set, we should first initialize it with a \texttt{FD\_ZERO}
 
 But that last one, \texttt{FD\_ISSET}, is a little different. It's not as if we would forget whether we put a file descriptor in the set. It's really for us to see what happens after \texttt{select()} is called -- we can find out whether a given file descriptor is in a particular set or not.
 
-The \texttt{readfds} are obviously sockets we are interested in reading from and \texttt{writefds} are accordingly those we are interested in writing from. But what about the \texttt{exceptfds} -- this isn't Java, it's not like we're going to get a \texttt{SocketDoesNotFeelLikeDoingWorkRightNowException}. No, this is for sockets that are in an exceptional state, which usually means there is Out-Of-Band (OOB) data on a TCP socket. We didn't cover this earlier in network communication and we will also not be going into this subject now. But you can find out if a socket is in that state if you have a reason.
+The \texttt{readfds} are obviously sockets we are interested in reading from and \texttt{writefds} are accordingly those we are interested in writing to. But what about the \texttt{exceptfds} -- this isn't Java, it's not like we're going to get a \texttt{SocketDoesNotFeelLikeDoingWorkRightNowException}. No, this is for sockets that are in an exceptional state, which usually means there is Out-Of-Band (OOB) data on a TCP socket. We didn't cover this earlier in network communication and we will also not be going into this subject now. But you can find out if a socket is in that state if you have a reason.
 
 We don't have to use all three of \texttt{readfds}, \texttt{writefds}, and \texttt{exceptfds} in a call to \texttt{select()} if we do not need them all. If we have only read sockets, we put them all in the \texttt{readfds} set and can just give \texttt{NULL} or empty \texttt{fd\_set}s in for the other parameters~\cite{getaddrinfo}.
 
@@ -88,7 +88,7 @@ When \texttt{select()} returns, however that happened, some if not all of the pa
 
 After select has returned, then we check the file descriptors in our sets. All of them. Yes, really. The function returns when there is something to do -- but we aren't told what socket is ready. So we would need to check each socket to see if, for example, it's ready for reading (if that's the plan). To do that we check \texttt{FD\_ISSET} with the socket and the set to see if it's in the desired state.
 
-Because the sets of file descriptors may have been modified, you probably need to rebuild them after each call, if you plan to use them again. If you were waiting, for example, three sockets, not all of them necessarily became ready at the same time. So if you want to go on waiting for those three, you will need to put them in a set again.
+Because the sets of file descriptors may have been modified, you probably need to rebuild them after each call, if you plan to use them again. If you were waiting on, for example, three sockets, not all of them necessarily became ready at the same time. So if you want to go on waiting for those three, you will need to put them in a set again.
 
 Let's imagine a brief example where we have a server that is going to listen on some different sockets for different services, imaginatively called service1, service2, and service3.
 
@@ -119,22 +119,23 @@ void listen_for_connections( int service1_sock, int service2_sock, int service3_
     } else if ( res == 0 ) { /* 0 sockets had events occur */
       printf( "Still waiting; nothing occurred recently.\n" );
     } else { /* Things happened */
-      if ( FD_ISSET( service1_sock, &s ) {
+      if ( FD_ISSET( service1_sock, &s ) ) {
         service1_activate( ); 
       }
-      if ( FD_ISSET( service2_sock, &s ) {
+      if ( FD_ISSET( service2_sock, &s ) ) {
         service2_activate( ); 
       }
-      if ( FD_ISSET( service3_sock, &s ) {
+      if ( FD_ISSET( service3_sock, &s ) ) {
         service3_activate( ); 
       }
+    }
   }
 }
 \end{lstlisting}
 
-You'll notice that we check each of the sockets individually -- more than one of them could become ready at once. Now, the \texttt{activate()} calls there could take some nontrivial time, and if sockets receive data in the meantime then on the next iteration of the loop then \texttt{select()} will return immediately because data is waiting.
+You'll notice that we check each of the sockets individually -- more than one of them could become ready at once. Now, the \texttt{activate()} calls there could take some nontrivial time, and if sockets receive data in the meantime then on the next iteration of the loop, \texttt{select()} will return immediately because data is waiting.
 
-This represents a fairly simple scenario, though, where we are just waiting for \texttt{accept()} on the three services where we send back as simple response and that's the end of it. But if the connections we were looking at are supposed to stay open for some period of time, such as when there is occasional communication, then we would also have to add and remove sockets from the sets as connections were opened and closed. Managing the set of sockets in such a scenario is non-trivial, because each call to \texttt{select} can (and usually does) change the sets.
+This represents a fairly simple scenario, though, where we are just waiting for \texttt{accept()} on the three services where we send back as a simple response and that's the end of it. But if the connections we were looking at are supposed to stay open for some period of time, such as when there is occasional communication, then we would also have to add and remove sockets from the sets as connections were opened and closed. Managing the set of sockets in such a scenario is non-trivial, because each call to \texttt{select} can (and usually does) change the sets.
 
 \paragraph{Chat Server.} The more complicated example in~\cite{getaddrinfo} is about a chat program (if you ever used IRC you have a pretty good idea of how this would work). When people want to join the chat room they send a message to a server. The server accepts and opens the connection and adds the client to the chat room. But people don't always talk. So if nothing is happening right now there's nothing to send. So the server can use \texttt{select()} to keep an eye open for when someone has said something. Either way, we would wait for something to happen, either on one of the sockets from a current client, or the socket for accepting incoming connections.
 
@@ -189,7 +190,7 @@ There's a slightly different function that is very much like \texttt{select()} a
 int poll( struct pollfd *fds, nfds_t nfds, int timeout );
 \end{lstlisting}
 
-The signature is a lot simpler, that's for sure. The first argument is an array of \texttt{struct pollfd}, which is our structure for passing in the sockets we wish to monitor. The second parameter is \texttt{ndfs} which is just the number of items in the array. Finally, \texttt{timeout} is the number of milliseconds to wait before returning with zero meaning don't wait at all, and a negative number meaning wait infinitely.
+The signature is a lot simpler, that's for sure. The first argument is an array of \texttt{struct pollfd}, which is our structure for passing in the sockets we wish to monitor. The second parameter is \texttt{nfds} which is just the number of items in the array. Finally, \texttt{timeout} is the number of milliseconds to wait before returning with zero meaning don't wait at all, and a negative number meaning wait infinitely.
 
 Alright, let's look at the structure:
 
@@ -226,9 +227,9 @@ void listen_for_connections( int service1_sock, int service2_sock, int service3_
   
   while( !quit ) {
     
-    int res = poll( &pollfds, 3, timeout );
+    int res = poll( pollfds, 3, timeout );
     if ( res == -1 ) { /* An error occurred */
-      printf( "An error occurred in select(): %s.\n", strerror( errno ) );
+      printf( "An error occurred in poll(): %s.\n", strerror( errno ) );
       quit = 1;
     } else if ( res == 0 ) { /* 0 sockets had events occur */
       printf( "Still waiting; nothing occurred recently.\n" );

@@ -397,9 +397,9 @@ pthread_mutex_unlock( lock );
 \end{frame}
 
 \begin{frame}
-	\frametitle{Hey glibc, Could You Please...}
+	\frametitle{Hey GCC, Could You Please...}
 
-The GNU (Linux) standard C library (\texttt{glibc}) provides operations that are guaranteed to execute atomically, to avoid simple race conditions
+The GCC compiler provides operations that are guaranteed to execute atomically, to avoid simple race conditions
 
 	Where possible, the compiler will try to turn these into uninterruptible hardware instructions.
 	
@@ -409,7 +409,7 @@ The GNU (Linux) standard C library (\texttt{glibc}) provides operations that are
 \begin{frame}
 	\frametitle{You Can't Take It With You}
 	
-	These are, however, glib specific, and not necessarily available or portable.
+	These are, however, GCC specific, and not necessarily available or portable.
 	
 	In the C11 (2011) standard, atomic types were finally introduced as part of the language specification. 
 	
@@ -513,7 +513,7 @@ __sync_lock_test_and_set( p1->y, 30 );
 
 	Although the set of each of \texttt{x} and \texttt{y} is atomic, the operation as a whole is not.
 
-	We could see invalid states, like (25, 0) or (0, 30).
+	We could see invalid states, like (25, 0) or (10, 30).
 	
 \end{frame}
 

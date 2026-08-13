@@ -56,7 +56,7 @@ void* inc_count( void* arg ) {
 
 void* watch_count( void *arg ) {
   pthread_mutex_lock( &count_mutex );  
-  if ( count < COUNT_LIMIT ) {
+  while ( count < COUNT_LIMIT ) {
     pthread_cond_wait( &count_threshold_cv, &count_mutex );
     printf( "Watcher has woken up.\n" );
     /* Do something useful here now that condition is fulfilled. */
@@ -125,7 +125,7 @@ pthread_cond_t cv;
 void barrier( ) {
   pthread_mutex_lock( &lock );
   count++;
-  if ( count < NUM_THREADS ) {
+  while ( count < NUM_THREADS ) {
     pthread_cond_wait( &cv, &lock );
   } else {
     pthread_cond_broadcast( &cv );
@@ -155,7 +155,7 @@ void foo( ) {
 }
 \end{lstlisting}
 
-In this case, there is control flow that could lead to exiting this function \texttt{foo} without unlocking the mutex \texttt{l}. Sure, when I cut the remaining code out and just replace it with some comments so the control flow that causes the problem here is obvious, but in a real code example the function in question is likely to be in the hundreds of lines and it's easy to overlook something.
+In this case, there is control flow that could lead to exiting this function \texttt{foo} without unlocking the mutex \texttt{l}. Sure, when I cut the remaining code out and just replace it with some comments, the control flow that causes the problem here is obvious. In a real code example the function in question is likely to be in the hundreds of lines and it's easy to overlook something.
 
 The idea of monitors should be familiar to you if you have used Java synchronization constructs, notably the \texttt{synchronized} keyword. In Java we can declare a method to be \texttt{synchronized}, adding it after the access modifier keyword (public, private, etc) in the function definition, and then there is a lock created around that method. Only one thread can be inside that method at a time; if a second would like to call that method on the same instance, it will be placed in the entry set for the lock: a set of threads waiting for the lock to become available~\cite{osc}.
 
@@ -178,7 +178,7 @@ public void exampleMethod() {
 
 This sort of ``automatic'' locking and releasing is intended to simplify the process of writing multithreaded code and abstract away some of the details of mutual exclusion.
 
-Monitors don't have to be written in Java (or a similar language) but they very commonly appear in object-oriented programming languages because of the goal of packaging up your data with the associated synchronization constructs looks a lot like Object-Oriented Programming: package up the data with its associated functions. Moreover, in an object-oriented language thanks to things like encapsulation (i.e., \texttt{private} variables), it's somewhat easier to ``force'' all access to be through the appropriate monitor.
+Monitors don't have to be written in Java (or a similar language) but they very commonly appear in object-oriented programming languages because the goal of packaging up your data with the associated synchronization constructs looks a lot like Object-Oriented Programming: package up the data with its associated functions. Moreover, in an object-oriented language thanks to things like encapsulation (i.e., \texttt{private} variables), it's somewhat easier to ``force'' all access to be through the appropriate monitor.
 
 \subsection*{Atomic Types}
 
@@ -190,13 +190,13 @@ shared_var++;
 pthread_mutex_unlock( lock );
 \end{lstlisting}
 
-While is is fully correct, if this happens frequently there is a lot of locking and unlocking on the same mutex, just to do the increment. So there's a fair amount of overhead on this. Thinking back to the ``test and set'' type of instruction from earlier, wouldn't it be nice if we could do that sort of thing for something like incrementing a variable? We can!
+While it is fully correct, if this happens frequently there is a lot of locking and unlocking on the same mutex, just to do the increment. So there's a fair amount of overhead on this. Thinking back to the ``test and set'' type of instruction from earlier, wouldn't it be nice if we could do that sort of thing for something like incrementing a variable? We can!
 
-The GNU (Linux) standard C library (\texttt{glibc}) provides operations that are guaranteed to execute atomically, to avoid simple race conditions. Where possible, the compiler will try to turn these into uninterruptible hardware instructions; otherwise a function that has locking will be used to implement the atomic nature.
+The GCC compiler provides operations that are guaranteed to execute atomically, to avoid simple race conditions. Where possible, the compiler will try to turn these into uninterruptible hardware instructions; otherwise a function that has locking will be used to implement the atomic nature.
 
 The kernel itself contains an atomic type, \texttt{atomic\_t}, but this is not intended for use outside of the kernel.
 
-The following function listings are an overview of the atomic operations, from~\cite{gccatomic}. These are, however, \texttt{glibc} specific, and not necessarily available in a general system. In the C11 (2011) standard, atomic types were finally introduced as part of the language specification itself. But before this we just had implementation-specific options. In the specification, we see \texttt{type} as the type, but that's of course not a real type. In its place you would use an \texttt{int} for an integer. A valid type is one that 1, 2, 4, or 8 bytes in length, if it's an integral type or a pointer.
+The following function listings are an overview of the atomic operations, from~\cite{gccatomic}. These are, however, \texttt{GCC} specific, and not necessarily available in a general system. In the C11 (2011) standard, atomic types were finally introduced as part of the language specification itself. But before this we just had implementation-specific options. In the specification, we see \texttt{type} as the type, but that's of course not a real type. In its place you would use an \texttt{int} for an integer. A valid type is one that is 1, 2, 4, or 8 bytes in length, if it's an integral type or a pointer.
 
 The following function is used to assign a new value, and returns the old value. However, the name is unfortunate, because it conflicts with the hardware instruction test-and-set which we discussed earlier. But this atomically sets the value of the variable as expected:
 

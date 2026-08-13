@@ -59,7 +59,7 @@ int send( int sockfd, const void* msg, int length, int flags );
 \begin{frame}
 	\frametitle{Send Fail?}
 
-	If something went wrong, the function returns -1..
+	If something went wrong, the function returns -1.
 
 	The \texttt{errno} variable will tell you more about what exactly went wrong.
 
@@ -75,7 +75,7 @@ int send( int sockfd, const void* msg, int length, int flags );
 	\frametitle{Send Message}
 
 	\begin{lstlisting}[language=C]
-char *msg = "Hello world!"
+char *msg = "Hello world!";
 int len = strnlen( msg, 13 );
 int sent = send( sockfd, msg, len, 0 );
 \end{lstlisting}

@@ -39,7 +39,7 @@
 
 	A thread of execution is a sequence of executable commands that can be scheduled to run on the CPU.
 
-	Threads also have some state and stores some local variables.
+	Threads also have some state and store some local variables.
 
 	Most programs you will write in other courses have only one thread;\\
 	\quad that is, your program's code is executed one statement at a time.
@@ -282,7 +282,7 @@ void* do_something( void* start_params )
 
 	\begin{lstlisting}[language=C]
 void* function( void * void_arg ) {
-  parameters_t *arguments = (parameters_t*) args;
+  parameters_t *arguments = (parameters_t*) void_arg;
   /* continue after this */
 }
 \end{lstlisting}
@@ -351,7 +351,7 @@ New threads can create other threads.
 \begin{frame}
 	\frametitle{Oh... Guess You Didn't Need This After All}
 
-	Another way a thread might terminate is if the \texttt{pthread\_cancel} function.\\
+	Another way a thread might terminate is if the \texttt{pthread\_cancel} function is called.\\
 	\quad We'll come back to this topic in more detail soon.
 
 	A thread may also be terminated indirectly: if the entire process is terminated or if \texttt{main} finishes first (without calling \texttt{pthread\_exit} itself).

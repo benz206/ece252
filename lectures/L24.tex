@@ -6,17 +6,17 @@
 
 \section*{Concurrency in File Systems}
 
-To understand the idea of concurrency in file systems, we need to peel back the interface a bit and have at least a high-level understanding of their implementation. File can be of arbitrary size (although in a particular file system there may be a limit), so they have to be allocated on disk according to some strategy.
+To understand the idea of concurrency in file systems, we need to peel back the interface a bit and have at least a high-level understanding of their implementation. Files can be of arbitrary size (although in a particular file system there may be a limit), so they have to be allocated on disk according to some strategy.
 
-The contiguous allocation strategy means that a file occupies a set of contiguous blocks on disk. So a file is allocated, starting at block $b$ and is $n$ blocks in size, the file takes up blocks $b, b+1, b+2, ..., b+(n-1)$. But for a sufficiently large file, it might be difficult to find a place to put it. And we also don't know how to predict the size of a file, so how much space do we leave for where to put it?
+The contiguous allocation strategy means that a file occupies a set of contiguous blocks on disk. So if a file is allocated, starting at block $b$ and is $n$ blocks in size, the file takes up blocks $b, b+1, b+2, ..., b+(n-1)$. But for a sufficiently large file, it might be difficult to find a place to put it. And we also don't know how to predict the size of a file, so how much space do we leave for where to put it?
 
 Linked allocation is a solution to the problems of contiguous allocation: instead of a file being all in consecutive blocks, we maintain a linked list of the blocks, and the blocks themselves may be located anywhere on the disk. The directory listing just has a pointer to the first and last blocks (head and tail of the linked list). Unfortunately, however, accessing block $i$ of a file is no longer as simple as computing an offset from the first block; it requires following $i$ pointers (a pain). If we want to go to the middle of a file, why do we have to load every block on the way there?
 
-There's a compromise approach: indexed allocation. The idea of indexed allocation is to take all the pointers and put them into one location: an index block. So, the first block of the file contains a whole bunch of pointers. To get to block $i$, just go to index $i$ of the index block and we can get the location of block $i$ much more efficiently than we could in linked allocation. All pointers to blocks start as null, and when we add a new block, add its corresponding entry into the index block~\cite{osc}. See the diagram below:
+There's a compromise approach: indexed allocation. The idea of indexed allocation is to take all the pointers and put them into one location: an index block. So, the first block of the file contains a whole bunch of pointers. To get to block $i$, just go to index $i$ of the index block and we can get the location of block $i$ much more efficiently than we could in linked allocation. All pointers to blocks start as null, and when we add a new block, add its corresponding entry into the index block~\cite{osc}. See the list below:
 
 \begin{enumerate}
 	\item \textbf{Linked Scheme}: An index block is a disk block, and we can link together several index blocks. The last entry in the index block is either null or a pointer to the next index block.
-	\item \textbf{Multilevel Index}: A variant of the linked scheme that has multiple levels. The first level block points to the second level block; the second level block points to the actual file data. This can go to as many levels are necessary based on the maximum file size. If a block is 4~KB, we can have 1024 4-byte pointers, so two levels would allow a maximum file size of up to 4~GB.
+	\item \textbf{Multilevel Index}: A variant of the linked scheme that has multiple levels. The first level block points to the second level block; the second level block points to the actual file data. This can go to as many levels as are necessary based on the maximum file size. If a block is 4~KB, we can have 1024 4-byte pointers, so two levels would allow a maximum file size of up to 4~GB.
 	\item \textbf{Combined Scheme}: The all-of-the-above option. This is used in UNIX. Keep the first 15 pointers of the index block in the inode structure; 12 of them point directly to file data. The next three pointers refer to indirect blocks. The 13th is an index block containing the addresses of blocks with data. The 14th points to a double indirect block (addresses of blocks containing addresses of blocks). The 15th points to a triple indirect block\footnote{Yo dawg, we heard you like index blocks...}.
 \end{enumerate}
 
@@ -70,7 +70,7 @@ Let's do some examples on how to use this structure and system call. The first e
 int write_lock_file( int fd ) {
 
   struct flock fl;
-  fl.l_type = F_WRLOCK;
+  fl.l_type = F_WRLCK;
   fl.l_start = 0;
   fl.l_whence = SEEK_SET;
   fl.l_len = 0;
@@ -96,7 +96,7 @@ Obviously if you wished to have a different type of lock or to only lock a speci
 int fd = open ( "example.txt", O_RDONLY );
 struct flock lock;
 
-lock.l_type = F_RDLOCK;
+lock.l_type = F_RDLCK;
 lock.l_start = 1024;
 lock.l_whence = SEEK_SET;
 lock.l_len = 256;
@@ -104,7 +104,7 @@ lock.l_len = 256;
 fcntl( fd, F_GETLK, &lock );
 if ( lock.l_type == F_UNLCK ) {
 	/* Lock is unlocked; we may proceed */
-} else if ( lock.l_type = F_WRLOCK ) {
+} else if ( lock.l_type == F_WRLCK ) {
   /* File is write locked by a different process */
   printf( "File locked by process ID %d.\n", lock.l_pid );
   return -1;
@@ -113,7 +113,7 @@ if ( lock.l_type == F_UNLCK ) {
 
 Checking on things with \texttt{F\_GETLK} is really for information purposes only: you should not make decisions about whether to proceed based on this, because of course the sequence of ``read of the value and then whatever operation you'd like to do next'' is not atomic. Instead, use the command \texttt{F\_SETLK} and actually try to set the lock. If \texttt{-1} is returned then locking was not successful. Or, if the plan is to wait, use \texttt{F\_SETLKW} as one would expect.
 
-It's important to remember that \texttt{fcntl} changes some values of the \texttt{struct lock} so if you wanted to re-use it you need to make sure to reset it as appropriate. You can use the same \texttt{struct lock} later to unlock the thing that you locked, just do so carefully.
+It's important to remember that \texttt{fcntl} changes some values of the \texttt{struct flock} so if you wanted to re-use it you need to make sure to reset it as appropriate. You can use the same \texttt{struct flock} later to unlock the thing that you locked, just do so carefully.
 
 I'll also take a minute to mention \texttt{lockf}: it is a simplified way of locking a file. While \texttt{fcntl} is more flexible, sometimes all we need is the simple version. According to the documentation:
 
@@ -202,7 +202,7 @@ void* writer( void* arg ) {
 
 
 int main( int argc, char** argv ) {
-  lock_fd = open( "file.lock", O_CREAT | O_EXCL );  
+  lock_fd = open( "file.lock", O_CREAT | O_EXCL | O_WRONLY, 0644 );
   if (lock_fd == -1 ) {
    printf( "File creation failed.\n");
    return -1;

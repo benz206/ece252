@@ -64,7 +64,7 @@ int aio_read( struct aiocb* aiocb );
 int aio_write( struct aiocb* aiocb );
 \end{lstlisting}
 
-These are self-explanatory, I would think. The return values are not the same as the actual I/O request return value (as we'll see). It is important to know that once we enqueue the result we can't change the control block or buffer while the operation is in progress, otherwise we might get inconsistent results. And so if we want to know if we are done~\cite{apunix}:
+These are self-explanatory, I would think. The return values are not the same as the actual I/O request return value (as we'll see). It is important to know that once we enqueue the request we can't change the control block or buffer while the operation is in progress, otherwise we might get inconsistent results. And so if we want to know if we are done~\cite{apunix}:
 
 \begin{lstlisting}[language=C]
 int aio_error( const struct aiocb* aiocb );
@@ -73,7 +73,7 @@ ssize_t aio_return( const struct aiocb* aiocb );
 
 The \texttt{aio\_error} function should probably really be called \texttt{aio\_status} instead, because it tells you what the status of the operation is. A return value of 0 means the operation has completed successfully! A return of -1 means that the call failed and \texttt{errno} tells you the actual reason. If the operation is still waiting to run or in progress the return value is \texttt{EINPROGRESS}; if we get any other value then an error occurred and the value is the error code.
 
-If the operation completed successfully, \texttt{aio\_return} will get the return value from the read or write operation. Calling this while the operation in still progress returns undefined results and potentially fails. We can call this only once per AIO operation; once the value has been collected then some internal structures can be deallocated, so it is polite to call it even if you do not need it.
+If the operation completed successfully, \texttt{aio\_return} will get the return value from the read or write operation. Calling this while the operation is still in-progress returns undefined results and potentially fails. We can call this only once per AIO operation; once the value has been collected then some internal structures can be deallocated, so it is polite to call it even if you do not need it.
 
 \paragraph{AIO Example: Read While You Eat.}
 

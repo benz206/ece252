@@ -19,7 +19,7 @@ In UNIX, we can create a \textit{pipe} to set up communication between a produce
 
 The pipe itself is a block of main memory that is interpreted as a circular queue, and each entry in the queue is fixed in size and usually one character. The sender may place the message into the queue in small chunks, but the receiver gets data one character at a time. Thus, the sender and receiver need to know when the message is finished. This may be through the use of a designated termination character (e.g., the line feed or null character), or the message may begin with an explicit value of the number of characters the message will be~\cite{mte241}.
 
-A UNIX pipe may be stored on disk. When this happens, we call it a \textit{named pipe}. Unless we make it a named pipe, a pipe exists only as long as the processes are communicating. Furthermore, regular pipes depend on file descriptors, so a parent-child relationship is required to get the descriptors from one process to another. The named pipe, however, might be used by any process and will persist even after the creating process has terminated. Another nice bonus of named pipes is that they can be bidirectional, so we do not need two pipes for communication to go in both directions. With that said, communication can only go in one direction at a time; if concurrent communication is required, a second pipe is needed after all.
+A UNIX pipe may be given a name on disk (but the data is still in memory). When this happens, we call it a \textit{named pipe}. Unless we make it a named pipe, a pipe exists only as long as the processes are communicating. Furthermore, regular pipes depend on file descriptors, so a parent-child relationship is required to get the descriptors from one process to another. The named pipe, however, might be used by any process and will persist even after the creating process has terminated. Another nice bonus of named pipes is that they can be bidirectional, so we do not need two pipes for communication to go in both directions. With that said, communication can only go in one direction at a time; if concurrent communication is required, a second pipe is needed after all.
 
 You may have worked with pipes on the UNIX command line. A command like \texttt{ cat fork.c | less } creates a pipe that takes the output of the \texttt{cat} program and delivers it as input to the program \texttt{less} which allows for scrolling and pagination of that data.
 
@@ -109,7 +109,7 @@ The functions we need are in \texttt{sys/shm.h}. The workflow for using shared m
 	\item Create a new shared memory segment -- \texttt{shmget}.
 	\item Attach the shared memory segment (add the shared segment to the process calling attach) -- \texttt{shmat}.
 	\item Then the process can use the shared memory.
-	\item Detach, from the shared memory segment (like deallocation, if forgotten then it will happen automatically when a process ends) -- \texttt{shmdt}.
+	\item Detach from the shared memory segment (like deallocation, if forgotten then it will happen automatically when a process ends) -- \texttt{shmdt}.
 	\item Delete the shared memory segment (after all currently attached processes have detached), done by one process only -- \texttt{shmctl}.
 \end{itemize}
 
@@ -124,7 +124,7 @@ int shmctl( int shmid, int cmd, struct shmid_ds *buf )
 
 To create a shared memory segment, or get a reference to an existing one, we use \texttt{shmget}. The first argument is the key, which can be either the result of a \texttt{ftok()} call or the constant \texttt{IPC\_PRIVATE}. The second argument is obviously the number of bytes the shared memory should be. The third argument is the access permissions that follow the UNIX permission standards, e.g. \texttt{0600}.
 
-The flags can also add \texttt{IPC\_CREAT} (if no segment with the given key exists, create it) and \texttt{IPC\_EXCL} (if ``create'' was used, fail if a segment with the given key exists). These are be combined with the permissions, and each other, with bitwise OR operator, like opening a file.
+The flags can also add \texttt{IPC\_CREAT} (if no segment with the given key exists, create it) and \texttt{IPC\_EXCL} (if ``create'' was used, fail if a segment with the given key exists). These can be combined with the permissions, and each other, with bitwise OR operator, like opening a file.
 
 The return value of the function is the integer identifier of the shared memory segment. Given this identifier, it's possible to then attach that segment: add the shared memory to the running process.
 
@@ -132,13 +132,13 @@ When calling \texttt{shmat}, the first argument is the ID of the shared memory r
 
 The return value of the call to \texttt{shmat} is a standard C pointer, containing the address of the shared memory. That's how we know where it is. Now we can read or write (if allowed) the data. At this point we are able to use the shared memory just like any other memory. Nothing special is needed -- no read or write calls -- just read and assign variables like any other memory.
 
-Of course, a process that wants to attach to the memory has to know the key (or ID) to find it. If we created the segment ourselves, we obviously know where it is. But presumably you want some other process to have it as well. If two processes use the same input values for \texttt{ftok()} they will get the same result, so that's one method. Or, if a parent attaches a shared memory segment and then calls \texttt{fork()}, the child inherits the shared memory segments, so it's is already set up.
+Of course, a process that wants to attach to the memory has to know the key (or ID) to find it. If we created the segment ourselves, we obviously know where it is. But presumably you want some other process to have it as well. If two processes use the same input values for \texttt{ftok()} they will get the same result, so that's one method. Or, if a parent attaches a shared memory segment and then calls \texttt{fork()}, the child inherits the shared memory segments, so it's already set up.
 
 When we are done with a segment we can detach from it with \texttt{shmdt}, and it takes as an argument the value returned by \texttt{shmat}. It could have been the ID value, in my opinion, but this works as well. If we forget to do this, then it will happen automatically at process termination, but it is good programming practice to deallocate memory when you no longer need it, and similarly to detach from a shared memory segment when we are done.
 
 To delete a shared memory segment, we use \texttt{shmctl}. This function can do a lot more than delete it, such as modify properties of the data structure that is used to control shared memory. But we just need to, at a minimum, delete the segment. To do so, call the function with the shared memory ID, and the command is \texttt{IPC\_RMID} (``remove ID''). We must leave the last argument as \texttt{NULL} for this deletion.
 
-Using the \texttt{shmctl} function with the deletion command doesn't (immediately) the segment. As long as it's still attached somewhere, the memory can't be cleaned up. In this respect, it's like a file in UNIX -- if it's open then it can't be removed until the last process closes it. In Linux it's possible to attach to a still-existing segment if it's been marked for deletion, but this is not consistent behaviour across all UNIX systems and should not be done~\cite{lpi}.
+Using the \texttt{shmctl} function with the deletion command doesn't (immediately) delete the segment. As long as it's still attached somewhere, the memory can't be cleaned up. In this respect, it's like a file in UNIX -- if it's open then it can't be removed until the last process closes it. In Linux it's possible to attach to a still-existing segment if it's been marked for deletion, but this is not consistent behaviour across all UNIX systems and should not be done~\cite{lpi}.
 
 
 Consider a minimal (working) example where shared memory is employed to deliver a message from a child process to a parent.
@@ -173,7 +173,7 @@ int main( int argc, char** argv ) {
 }
 \end{lstlisting}
 
-Perhaps you have a small security concern: can anyone who knows the key or shared memory ID attach to my shared memory? No -- it's only possible to attach to memory segments of your own processes. A process run by user j999doe can only attach to memory shared by another process run by that user. The owner can reassign ownership with the \texttt{shmctl()} call, but this is beyond the scope of the course.
+Perhaps you have a small security concern: can anyone who knows the key or shared memory ID attach to my shared memory? No -- it's only possible to attach to memory segments of your own processes or those where the user has granted permissions with the permission bits. A process run by user j999doe can only attach to memory shared by another process run by that user. The owner can reassign ownership with the \texttt{shmctl()} call, but this is beyond the scope of the course.
 
 
 \paragraph{Alternatively: \texttt{mmap}.} An alternative approach for shared memory involves the use of \texttt{mmap()}, a function nominally used to map a file into memory. This is neat -- it would allow us to map some disk file to a buffer, so when we fetch data from that buffer, the data is read and when we write into the buffer the data is written to the file. It allows us to read and write files as if they were memory accesses. Very convenient. But we can also use this for IPC, hence its introduction here. But first, the functions need to be introduced. As in~\cite{apunix}:
@@ -185,11 +185,11 @@ int msync( void* address, size_t length, int flags );
 int munmap( void* address, size_t length );
 \end{lstlisting}
 
-The first argument is the address for where you want the mapped region to go in memory; unless you have a very good reason to do otherwise, let the system choose by supplying \texttt{NULL}. The next argument is the number of bytes we want to map. The third argument is the protection rules --- read, write execute, and none -- that apply (details below). The flag argument indicates the mode that the memory will be mapped in. The second-last argument is the file descriptor of the file we wish to map, and the last argument is the offset from the start of the file where the segment begins.
+The first argument is the address for where you want the mapped region to go in memory; unless you have a very good reason to do otherwise, let the system choose by supplying \texttt{NULL}. The next argument is the number of bytes we want to map. The third argument is the protection rules -- read, write, execute, and none -- that apply (details below). The flag argument indicates the mode that the memory will be mapped in. The second-last argument is the file descriptor of the file we wish to map, and the last argument is the offset from the start of the file where the segment begins.
 
 The return value is a pointer to the starting address of the memory area where the file is mapped.
 
-Okay, so about the protection flags: valid values are \texttt{PROT\_NONE}, \texttt{PROT\_READ}, \texttt{PROT\_WRITE}, and \texttt{PROT\_EXECUTE}, which can be combined using the bitwise OR operator (as always). The read, write, and execute ones look as expected, but whatever flags you choose have to be consistent with how the file was opened with \texttt{open}. So you can't use \texttt{open} as readonly and then somehow use \texttt{mmap} with the write flag. And \texttt{PROT\_NONE} forbids all access; any attempt to access that memory results in a segmentation fault.
+Okay, so about the protection flags: valid values are \texttt{PROT\_NONE}, \texttt{PROT\_READ}, \texttt{PROT\_WRITE}, and \texttt{PROT\_EXEC}, which can be combined using the bitwise OR operator (as always). The read, write, and execute ones look as expected, but whatever flags you choose have to be consistent with how the file was opened with \texttt{open}. So you can't use \texttt{open} as readonly and then somehow use \texttt{mmap} with the write flag. And \texttt{PROT\_NONE} forbids all access; any attempt to access that memory results in a segmentation fault.
 
 Digression: why would you ever use \texttt{PROT\_NONE}? What's the point of mapping a segment of the file and then forbidding all access...?  A possible use of this is to put ``guards'' at the start and end of a region of memory. If the process accidentally goes outside the bounds, then a segmentation fault is generated, thus enforcing the ends of the area~\cite{lpi}.
 

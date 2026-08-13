@@ -171,8 +171,7 @@
 
 	If a file needs only 1-2 blocks, one whole block is allocated for the pointers which contains only 1-2 entries.
 
-	That suggests we want the index to be small, but what if we need more pointers than fit into one block? There are a few mechanisms for this.
-
+	That suggests we want the index to be small.
 
 \end{frame}
 
@@ -315,7 +314,7 @@ struct flock {
 int write_lock_file( int file_descriptor ) {
 
   struct flock fl;
-  fl.l_type = F_WRLOCK;
+  fl.l_type = F_WRLCK;
   fl.l_start = 0;
   fl.l_whence = SEEK_SET;
   fl.l_len = 0;
@@ -348,7 +347,7 @@ int unlock_file( int file_descriptor ) {
 int fd = open ( "example.txt", O_RDONLY );
 struct flock lock;
 
-lock.l_type = F_RDLOCK;
+lock.l_type = F_RDLCK;
 lock.l_start = 1024;
 lock.l_whence = SEEK_SET;
 lock.l_len = 256;
@@ -356,7 +355,7 @@ lock.l_len = 256;
 fcntl( fd, F_GETLK, &lock );
 if ( lock.l_type == F_UNLCK ) {
 	/* Lock is unlocked; we may proceed */
-} else if ( lock.l_type = F_WRLOCK ) {
+} else if ( lock.l_type == F_WRLCK ) {
   /* File is write locked by a different process */
   printf( "File locked by process ID %d.\n", lock.l_pid );
   return -1;
@@ -567,7 +566,7 @@ void* writer( void* arg ) {
 }
 
 int main( int argc, char** argv ) {
-  lock_fd = open( "file.lock", O_CREAT | O_EXCL );  
+  lock_fd = open( "file.lock", O_CREAT | O_EXCL | O_WRONLY, 0644 );
   if (lock_fd == -1 ) {
    printf( "File creation failed.\n");
    return -1;

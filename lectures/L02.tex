@@ -26,7 +26,7 @@ In addition to the hardware to decode and execute the different instructions, th
 
 \subsection*{Interrupts}
 
-The CPU frequently needs data to continue its operations, but it can take a variable amount of time to get it, depending on where it's coming from. An analogy to put it in perspective: imagine I am the CPU and a particular book is the piece of data needed. If the data is in the cache, it is as if the book is on a bookshelf in my office. Thus, I can retrieve the book very quickly. If the data for the CPU on a magnetic hard disk, it is as if I would have to get the book from Library and Archives Canada in Ottawa (about 550 km away, according to Google Maps). And I would have to walk. Of course, the analogy is slightly tortured because the CPU doesn't go get the data; instead it must wait for it to arrive. If I ordered a book from Library and Archives Canada and someone had to walk it over, I would spend a lot of time waiting. What might I do in the meantime...?
+The CPU frequently needs data to continue its operations, but it can take a variable amount of time to get it, depending on where it's coming from. An analogy to put it in perspective: imagine I am the CPU and a particular book is the piece of data needed. If the data is in the cache, it is as if the book is on a bookshelf in my office. Thus, I can retrieve the book very quickly. If the data for the CPU is on a magnetic hard disk, it is as if I would have to get the book from Library and Archives Canada in Ottawa (about 550 km away, according to Google Maps). And I would have to walk. Of course, the analogy is slightly tortured because the CPU doesn't go get the data; instead it must wait for it to arrive. If I ordered a book from Library and Archives Canada and someone had to walk it over, I would spend a lot of time waiting. What might I do in the meantime...?
 
 It seems logical that I should do something else. There are two options for dealing with this situation. One is polling: that I can check periodically if the book has arrived. This approach is fairly wasteful (how often do I check? How much time will I spend checking?). The other solution is that I can receive a notification when the poor fellow who has walked the 550 km to my office has arrived. If he knocks on my office door, it will cause me to suspend what I am doing and collect the book. Or, to put it in one word: interrupts.
 
@@ -34,7 +34,7 @@ In that analogy I played the part of the CPU, and was interrupted and had to dea
 
 \begin{enumerate}
 	\item \textbf{Program:} Something happens in the program (e.g., a division by zero).
-	\item \textbf{Timer:} A configured timer within the processor's time expires (e.g., to update the system clock).
+	\item \textbf{Timer:} A configured timer within the processor expires (e.g., to update the system clock).
 	\item \textbf{Input/Output:} An I/O controller signals (un)successful completion of an operation (e.g., read from disk).
 	\item \textbf{Hardware Failure:} Something happens in hardware (e.g., power failure).
 \end{enumerate}
@@ -116,7 +116,7 @@ This is a system call, and system calls have documentation. Finding and reading 
 
 
 
-In preparation for invocation of \texttt{read} the parameters are pushed on the stack. This is the normal way in which a procedure is called in \Cpp. Then the \texttt{read} procedure is called and this is just the normal instruction to enter another function. The \texttt{read} function will put its identifier (the system call number) in a predefined location (typically a register). Then it executes the \texttt{trap} instruction, activating the OS.
+In preparation for invocation of \texttt{read} the parameters are pushed on the stack. This is the normal way in which a procedure is called in C (and \Cpp). Then the \texttt{read} procedure is called and this is just the normal instruction to enter another function. The \texttt{read} function will put its identifier (the system call number) in a predefined location (typically a register). Then it executes the \texttt{trap} instruction, activating the OS.
 
 When the \texttt{trap} occurs, the OS takes over and control switches from user mode to kernel mode. Control transfers to a predefined memory location within the kernel (the trap handler). The trap handler then runs and examines the request: it checks the identifier that was put in the register earlier. Based on that, it knows what system call request handler should execute: the one to read from a file. That routine executes. When it is finished, control will be returned to the \texttt{read} function; we exit the kernel and return to user mode.
 

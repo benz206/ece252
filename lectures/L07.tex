@@ -24,20 +24,20 @@ Much like everything else in UNIX, a socket is handled like a file. It just so h
 int socket( int domain, int type, int protocol )
 \end{lstlisting}
 
-The arguments require some explanation. The \texttt{domain} value defines the address format (amongst other things) and is how we would choose between, for example, IPv4 and IPv6 (or other more things...). For the purposes of this course, we'll use IPv4 and the constant for that is defined as \texttt{AF\_INET} (address family: internet!).
+The arguments require some explanation. The \texttt{domain} value defines the address format (amongst other things) and is how we would choose between, for example, IPv4 and IPv6 (or other things...). For the purposes of this course, we'll use IPv4 and the constant for that is defined as \texttt{AF\_INET} (address family: internet!).
 
 The \texttt{type} argument gives what kind of information we are going to be sending. \texttt{SOCK\_DGRAM} is for datagrams and \texttt{SOCK\_STREAM} is for a bidirectional byte stream~\cite{apunix}.
 
 The \texttt{protocol} argument is about how the data is to be transported over the connection, and we will just use 0 for the default. If we chose a stream, the default is TCP/IP. Without going into too much detail, TCP/IP is the way a lot of data is transported over the internet. This is a (generally) reliable method of transport that makes sure your data gets to where it needs to go, with all the pieces in the correct order. If we chose a datagram, the default is UDP, which is not a reliable method of communication: data packets might get there or they might not.
 
-Notice that the return type is an integer. Why is that? Well, a file descriptor is really just an integer, as we already saw with the pipe examples. So as long as we remember that's what the integer represents, we will not have any problems.
+Notice that the return type is an integer. Why is that? Well, a file descriptor is really just an integer, as we already saw with the ``opening a file'' example. So as long as we remember that's what the integer represents, we will not have any problems.
 
 And just like a file that is opened, a socket that is opened needs to be closed when we are finished with it. For that we can just use \texttt{close}. You have probably noticed some asymmetry: there are different calls to open things (\texttt{open}, \texttt{pipe}, \texttt{socket}). That's because when we want to open something we have to say what kind of thing we want to open. When we want to close something, we already know what type it is.
 
 \paragraph{Check the Boot of the Car for your Jumper!}
 When we are going to communicate over the network we have to make sure that we speak the same language. More than that, we have to speak the same dialect (British English, for example, contains phrases and terms that you might not know if you only know Canadian or American English).
 
-Normally this is not something that we need to think about, but when communicating over the network, the system on the other side might have a different idea of how data is organized. Consider, if you will, a four byte (32 bit) integer. There are two possible (reasonable) orders for how its bytes can be stored: smallest to largest or largest to smallest. These are shown below as big-endian and little-endian respectively:
+Normally this is not something that we need to think about, but when communicating over the network, the system on the other side might have a different idea of how data is organized. Consider, if you will, a four byte (32 bit) integer. There are two possible (reasonable) orders for how its bytes can be stored: smallest to largest or largest to smallest. These are shown below as little-endian and big-endian respectively in this diagram:
 
 \begin{center}
 	\includegraphics[width=0.25\textwidth]{images/endian}\\
@@ -76,7 +76,7 @@ As expected, if we want an IPv4 address then we use the matching family type of 
 
 You're almost certainly familiar with IPv4 addresses... they take the format of \texttt{XXX.XXX.XXX.XXX} where each grouping of \texttt{XXX} is a number between 0 and 255. If you want to connect to your router, for example, you might type in \texttt{192.168.0.1} in the address bar of your browser. When you type in a name, like \texttt{uwaterloo.ca} there is a translation process that occurs that transforms this into an IP address, like \texttt{129.97.208.23}. The computer uses the number; names are nice for humans, though. But here we chose a constant value, \texttt{INADDR\_ANY}. This says, choose the current IP address of the current computer (and it could have several if it has more than one network connection). We aren't trying to use any specific address; we just want one the computer has.
 
-And what about ports? If you want to think about your computer's address as being like a street address, imagine that it's then an apartment building and the port number is which apartment the connection is made with. Different services (processes) are communicating over different ports. No two processes can be using the same port at the same time. By convention, ports with numbers below 1024 considered to be reserved for system services (and requiring superuser access to make use of). For our purposes, we will always choose ports above 1024.
+And what about ports? If you want to think about your computer's address as being like a street address, imagine that it's then an apartment building and the port number is which apartment the connection is made with. Different services (processes) are communicating over different ports. No two processes can be using the same port at the same time. By convention, ports with numbers below 1024 are considered to be reserved for system services (and requiring superuser access to make use of). For our purposes, we will always choose ports above 1024.
 
 When you log in to a server with \texttt{ssh}, for example, the default port for that is 22. This is a ``well known'' port, in that everyone agrees up front this port is the one for this service. Thus when a server starts up the daemon, it knows to listen for connections on port 22 and when you're ready to connect to that server, the \texttt{ssh} client chooses that port by default.
 
@@ -85,7 +85,7 @@ In real life, we probably only rarely use IP addresses directly when trying to c
 
 Looking up hostnames and the like is somewhat complex (and not the focus), so we will just learn one method for doing this. Many examples and older texts use the function \texttt{gethostbyname()}, but this is now deprecated and has been replaced with the \texttt{getaddrinfo()} function instead. You might still see it in the wild but we should learn the new way.
 
-The function is prototyped in in \texttt{netdb.h} and looks like this~\cite{getaddrinfo}:
+The function is prototyped in \texttt{netdb.h} and looks like this~\cite{getaddrinfo}:
 \begin{lstlisting}[language=C]
 int getaddrinfo(const char *node,     // e.g. "www.example.com" or IP
                 const char *service,  // e.g. "http" or port number
@@ -116,7 +116,7 @@ struct sockaddr_in * sain = (struct sockaddr_in*) serverinfo->ai_addr;
 freeaddrinfo( serverinfo );
 \end{lstlisting}
 
-Assuming that all went well, the \texttt{serverinfo} pointer is now pointing to a linked list of \texttt{struct sockaddr} (the generic form of \texttt{sockaddr\_in}) which gives us the information we need: the IP address for the server we want to communicate with. The actual info struct is in the linked list node's \texttt{ai\_addr} attribute and the pointer to the next one is \texttt{ai\_next}. Most of the time we just need the first result, though. The \texttt{struct sockaddr} structure we got out of this can be used in future calls (although we might need to cast the result to the type we need).
+Assuming that all went well, the \texttt{serverinfo} pointer is now pointing to a linked list of \texttt{struct addrinfo} (the generic form of \texttt{sockaddr\_in}) which gives us the information we need: the IP address for the server we want to communicate with. The actual info struct is in the linked list node's \texttt{ai\_addr} attribute and the pointer to the next one is \texttt{ai\_next}. Most of the time we just need the first result, though. The \texttt{struct sockaddr} structure we got out of this can be used in future calls (although we might need to cast the result to the type we need).
 
 If we are interested in getting the structure for the local computer, we can manually initialize the \texttt{struct sockaddr\_in} as we did before learning about how \texttt{getaddrinfo()} works. Or we can call \texttt{getaddrinfo()} with \texttt{NULL} as the \texttt{node} parameter.
 
@@ -131,7 +131,7 @@ If we are the client, we'd like to connect to a server. This is the easier workf
 int connect( int sockfd, struct sockaddr *addr, socklen_t len); 
 \end{lstlisting}
 
-The parameters are simple enough: the first argument \texttt{sockfd} is the socket file descriptor (the \texttt{int} we got back from the call to \texttt{socket}). The second parameter is a pointer to the \texttt{struct sockaddr} that we have, whether manually created or a returned value from \texttt{getaddrinfo}). The last parameter is about the size of the second parameter. If we manually created the structure, we just use \texttt{sizeof}; if it was returned from \texttt{getaddrinfo()} then there is also an attribute \texttt{ai\_addrlen} provided. Consider an example using \texttt{getaddrinfo}~\cite{getaddrinfo}:
+The parameters are simple enough: the first argument \texttt{sockfd} is the socket file descriptor (the \texttt{int} we got back from the call to \texttt{socket}). The second parameter is a pointer to the \texttt{struct sockaddr} that we have, whether manually created or a returned value from \texttt{getaddrinfo}. The last parameter is about the size of the second parameter. If we manually created the structure, we just use \texttt{sizeof}; if it was returned from \texttt{getaddrinfo()} then there is also an attribute \texttt{ai\_addrlen} provided. Consider an example using \texttt{getaddrinfo}~\cite{getaddrinfo}:
 
 \begin{lstlisting}[language=C]
 struct addrinfo hints;
@@ -153,7 +153,7 @@ The return value of \texttt{connect} determines whether we successfully connecte
 Assuming that you connected successfully, you're now ready to start using the connection. But before we do that, let's see what happens on the server side.
 
 \paragraph{Server: Bind, Listen, and Accept.}
-The overview of what steps the server is going to do is bind, listen, and accept. The bind step is how we choose what port we are going to connect to. The listen step is the part where we wait for connections from a client. Then the last step is accept, that is, establish the connection so we can start talking.
+The overview of what steps the server is going to do is bind, listen, and accept. The bind step is how we choose what port we are going to connect to. The listen step is the part where we say the socket is ready for connections from a client. Then the last step is accept, that is, establish the connection so we can start talking.
 
 Step one is \texttt{bind()}: this is how we associate the socket with whatever port we want to use. When the \texttt{ssh} daemon is available for connection, it's because it has bound itself to the port 22 using \texttt{bind}.
 
@@ -171,7 +171,7 @@ bind( socketfd, (struct sockaddr*) &addr, sizeof( addr ));
 
 With that done, we've acquired the resource of port 2520 for our use. We haven't done anything with it yet, but we've taken it for ourselves. You'll notice also this did not happen on the client side. This is because we don't care (usually) on the client side what the outgoing port number is. So we can just skip that step, unless we have a reason to care what the outgoing port is.
 
-Step two is \texttt{listen()}: int this step we wait for incoming connections. This is the simplest step and you just call:
+Step two is \texttt{listen()}: in this step we wait for incoming connections. This is the simplest step and you just call:
 
 \begin{lstlisting}[language=C]
 int listen(int sockfd, int backlog); 
@@ -195,7 +195,7 @@ Let's see a quick example of how to put all the pieces together now, skipping th
 
 \begin{lstlisting}[language=C]
 struct sockaddr_in client_addr;
-int client_addr_size = sizeof( struct sockaddr_in );
+socklen_t client_addr_size = sizeof( struct sockaddr_in );
 int newsockfd;
 
 int socketfd = socket( AF_INET, SOCK_STREAM, 0 );

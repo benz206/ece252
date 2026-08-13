@@ -13,7 +13,7 @@ Each contestant has an unlimited supply of one ingredient. Contestant A has an u
 
 In this scenario, there are resources provided by some external system and the contestants are processes that want resources. But we shouldn't be wasteful: resources should only be requested when they are needed and processes should take only what they need. Applications should only wake up if they can do something useful.
 
-There are some restrictions, though, and they could make the problem either impossible or trivial. In the impossible version, you can't modify what the host does (which is sensible, because you don't control the other system) but you also cannot use conditional (if) statements, which is pretty ridiculous. In the trivial version, the host tells which contestants whose turn it is, which is boring but also unrealistic, because again it requires the host system to know too much about the contestants. The interesting version has just the restriction that we can't control the host behaviour~\cite{lbs}. And he is a TV chef personality, after all, they do wacky things.
+There are some restrictions, though, and they could make the problem either impossible or trivial. In the impossible version, you can't modify what the host does (which is sensible, because you don't control the other system) but you also cannot use conditional (if) statements, which is pretty ridiculous. In the trivial version, the host tells the contestants whose turn it is, which is boring but also unrealistic, because again it requires the host system to know too much about the contestants. The interesting version has just the restriction that we can't control the host behaviour~\cite{lbs}. And he is a TV chef personality, after all, they do wacky things.
 
 Consider the following solution. All semaphores start at 0, except for \texttt{host} which starts as 1 (so the host will run the first time). Does this work?
 
@@ -142,7 +142,7 @@ The contestant code is pretty much trivial now: wait until a helper signals, the
 
 The generalized version of the problem is what happens when the host puts out ingredients periodically, without a need to be signalled to ask for more. How do we modify the solution to deal with that?
 
-Obviously if there is no longer a need for the contestants to signal that they want more resources then the \texttt{post( host )} statements in the contestant code has to be removed. But what about the helpers?
+Obviously if there is no longer a need for the contestants to signal that they want more resources then the \texttt{post( host )} statements in the contestant code have to be removed. But what about the helpers?
 
 Instead of boolean variables to indicate the presence or absence of an ingredient what we need instead is an integer counter to know how many there are. So let's call them \texttt{num\_dough}, \texttt{num\_sauce}, and \texttt{num\_cheese}, and they all start as zero.
 
@@ -239,7 +239,7 @@ cut_hair()
 
 The barber code is much simpler, so let's start there. The barber waits for there to be a customer. When there is one, the barber calls the customer forward by signalling on \texttt{barber}, and then cuts hair. Simple enough.
 
-As for the customer, \texttt{customers} is shared data, so its access should be protected by \texttt{mutex}. If we find that the number of customers is already $n$ -- that is, the waiting area is full, the customer should leave. But not without unlocking \texttt{mutex}! If the customer forgot to do that then no more customers could enter. That's a problem. Otherwise the count of customers is increased and the customer signals the semaphore \texttt{customer}. This will wake up the barber, if the barber is sleeping, but also indicates the number of customers waiting. Then the customer must wait for the barber. When the customer gets called forward by the barber, the customer can get their hair cut. Finally, when leaving, the customer decrements the number of customers counter.
+As for the customer, \texttt{customers} is shared data, so its access should be protected by \texttt{mutex}. If we find that the number of customers is already $n+1$ -- that is, the waiting area is full, the customer should leave. But not without unlocking \texttt{mutex}! If the customer forgot to do that then no more customers could enter. That's a problem. Otherwise the count of customers is increased and the customer signals the semaphore \texttt{customer}. This will wake up the barber, if the barber is sleeping, but also indicates the number of customers waiting. Then the customer must wait for the barber. When the customer gets called forward by the barber, the customer can get their hair cut. Finally, when leaving, the customer decrements the number of customers counter.
 
 Let's look over this for a risk of deadlock. We don't see anywhere, really, the nested-waits pattern that usually indicates trouble. There isn't really any scenario where a customer can get blocked waiting for another customer or the barber, and the barber code is very simple.
 
@@ -307,11 +307,11 @@ Is there a risk of deadlock here? For one thing, there are no nested waits; each
 How about starvation? As long as there are an appropriate number of fighters and transports, they will successfully match up with one another and can eventually launch. 
 
 \paragraph{On to the Chemistry...}
-There are two kinds of thread, \texttt{oxygen()} and \texttt{hydrogen()}. As you will recall from basic chemistry, water, H$_{2}$O, requires two hydrogen modules and one oxygen module. To assemble the desired molecule (water) a group rendezvous pattern is needed to make each thread wait until all ingredients are present in the correct amounts. As each thread passes the barrier, it should call the function \texttt{bond()} which makes the water. Our solution must function so that all threads for one molecule invoke \texttt{bond()} before any of the threads from the next molecule do.
+There are two kinds of thread, \texttt{oxygen()} and \texttt{hydrogen()}. As you will recall from basic chemistry, water, H$_{2}$O, requires two hydrogen atoms and one oxygen atom. To assemble the desired molecule (water) a group rendezvous pattern is needed to make each thread wait until all ingredients are present in the correct amounts. As each thread passes the barrier, it should call the function \texttt{bond()} which makes the water. Our solution must function so that all threads for one molecule invoke \texttt{bond()} before any of the threads from the next molecule do.
 
-To clarify, if an oxygen thread arrives at the barrier when no hydrogen threads are present, it has to wait for two hydrogen threads to arrive. If a hydrogen thread arrives a the barrier when no other threads are waiting, it has to wait for an oxygen thread and another hydrogen thread. It is not necessary for the threads to know what other threads they are matched with, as long as the correct elements are present in the correct proportions.
+To clarify, if an oxygen thread arrives at the barrier when no hydrogen threads are present, it has to wait for two hydrogen threads to arrive. If a hydrogen thread arrives at the barrier when no other threads are waiting, it has to wait for an oxygen thread and another hydrogen thread. It is not necessary for the threads to know what other threads they are matched with, as long as the correct elements are present in the correct proportions.
 
-In the example, we'll assume the \texttt{oxygen} and \texttt{hydrogen} threads are created and started correctly and in the correct proportions. The code for the creation of those two types of threads is not shown for space reasons. The reusable two-phase barrier from earlier has also been converted into C code.
+In the example, we'll assume the \texttt{oxygen} and \texttt{hydrogen} threads are created and started correctly and in the correct proportions. The code for the creation of those two types of threads is not shown for space reasons. The barrier from earlier has also been converted into C code.
 
 The oxygen queue and hydrogen queue start as ``locked'' so we'll only signal the threads when they are going to proceed. Before that we have a scoreboard pattern, where threads take a look at the state of the system and decide what to do.
 
@@ -323,7 +323,7 @@ pthread_mutex_t barrier_mutex;
 sem_t turnstile;
 int barrier_count;
 int barrier_N;
-sem_t bond;
+sem_t bond_s;
 sem_t oxygen_queue;
 sem_t hydrogen_queue;
 
@@ -358,9 +358,9 @@ int main( void ) {
   barrier_N = 3;
 
   pthread_mutex_init( &barrier_mutex, NULL );
-  sem_init( &barrier_turnstile, 0, 0 );
+  sem_init( &turnstile, 0, 0 );
   
-  sem_init( &bond, 0, 1 );
+  sem_init( &bond_s, 0, 1 );
   sem_init( &oxygen_queue, 0, 0 );
   sem_init( &hydrogen_queue, 0, 0 ); 
 
@@ -368,8 +368,8 @@ int main( void ) {
    not shown for space reasons */
 
   pthread_mutex_destroy( &barrier_mutex );
-  sem_destroy( &barrier_turnstile );
-  sem_destroy( &bond );
+  sem_destroy( &turnstile );
+  sem_destroy( &bond_s );
   sem_destroy( &oxygen_queue );
   sem_destroy( &hydrogen_queue );   
 
@@ -382,7 +382,7 @@ int main( void ) {
 \begin{multicols}{2}
 	\begin{lstlisting}[language=C]
 void* oxygen( void* ignore ) {
-  sem_wait( &bond );
+  sem_wait( &bond_s );
   oxygen++;
   
   if( hydrogen >= 2 ){
@@ -392,7 +392,7 @@ void* oxygen( void* ignore ) {
     sem_post( &oxygen_queue );
     oxygen--;
   } else {
-    sem_post( &bond );
+    sem_post( &bond_s );
   }
   
   sem_wait( &oxygen_queue );
@@ -403,23 +403,23 @@ void* oxygen( void* ignore ) {
 
   sem_post( &bond );
   
-  pthread_exit( NULL )
+  pthread_exit( NULL );
 }
 \end{lstlisting}
 	\columnbreak
 	\begin{lstlisting}[language=C]
 void* hydrogen( void* ignore ) {
-  sem_wait( &bond );
+  sem_wait( &bond_s );
   hydrogen++;
   
-  if( hydrogen >= 2 && oxygen >= 1 )
+  if( hydrogen >= 2 && oxygen >= 1 ) {
     sem_post( &hydrogen_queue );
     sem_post( &hydrogen_queue );
     hydrogen -= 2;
     sem_post( &oxygen_queue );
     oxygen--;
   } else {
-    sem_post( &bond );
+    sem_post( &bond_s );
   }
   
   sem_wait( &hydrogen_queue );
@@ -428,7 +428,7 @@ void* hydrogen( void* ignore ) {
   barrier_enter();
   barrier_exit();
   
-  pthread_exit( NULL )
+  pthread_exit( NULL );
 }
 \end{lstlisting}
 \end{multicols}
@@ -436,7 +436,7 @@ void* hydrogen( void* ignore ) {
 
 Let's analyze the solution then, starting with oxygen threads. When it enters, it waits on the \texttt{bond} semaphore, which in this case is used somewhat like a mutex. If there are at least two hydrogen threads waiting, then, we can unblock two of them, signal the oxygen queue, and update the counters. If there are not two hydrogens waiting, then we just signal \texttt{bond} so that the next thread will arrive. Then the thread can get in line at the oxygen queue.
 
-The hydrogen code is more or less the same, but the if-condition is different since it's not enough for 1 hydrogen to be present (we need at least two). If we have what we need, signal the queues to release the needed molecules, and we are ready to go. If not, get in line.
+The hydrogen code is more or less the same, but the if-condition is different since it's not enough for 1 hydrogen to be present (we need at least two). If we have what we need, signal the queues to release the needed atoms, and we are ready to go. If not, get in line.
 
 When threads are released from the oxygen queue and hydrogen queue respectively, they proceed forward to the \texttt{bond()} step, and afterwards there is a barrier enter followed by exit to wait for all of them to be finished. All we really need is for all three threads to be done with \texttt{bond()} before they can exit so the barrier enter and exit happen one after the other.
 

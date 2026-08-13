@@ -476,7 +476,7 @@ FD_ZERO( &fdw );
 FD_ZERO( &fde );
 int maxfd = -1;
 
-CURLMCode res = curl_multi_fdset( cm, &fdr, &fdw, &fde, &maxfd );
+CURLMcode res = curl_multi_fdset( cm, &fdr, &fdw, &fde, &maxfd );
 \end{lstlisting}
 
 	When calling select we still have to put a \texttt{+1} on the max file descriptor, but that is no big deal.

@@ -21,7 +21,7 @@ The return value of the function is the number of bytes sent. If something went 
 
 Let's consider a modified example from~\cite{getaddrinfo}:
 \begin{lstlisting}[language=C]
-char *msg = "Hello world!"
+char *msg = "Hello world!";
 int len = strnlen( msg, 13 );
 int sent = send( sockfd, msg, len, 0 );
 \end{lstlisting}
@@ -63,7 +63,7 @@ The return value is the number of bytes actually read into the buffer. If you go
 
 Knowing that the other side is finished sending data is not necessarily all that easy. That's something to work out with the sender. This is why in movies when characters communicate with walkie-talkies, they say ``over'' when they have finished their transmission... so the recipient will know they are finished talking. In network communication, we might know in advance the size of data we are supposed to get, or we might be told as part of the (negotiated) protocol, or we might need to wait for the other side to close the connection (then we know they are definitely done).
 
-Suppose we are sending more than just a string. Can we do a fancy thing and write directly to a \texttt{struct} by making the buffer location the location of that \texttt{struct} and the length the \texttt{sizeof} that type? Yes, you can but this requires that the representation you receive over the network to be exactly the same as your struct. A more sensible approach is to serialize your data in some way, and then de-serialize it on the other side.
+Suppose we are sending more than just a string. Can we do a fancy thing and write directly to a \texttt{struct} by making the buffer location the location of that \texttt{struct} and the length the \texttt{sizeof} that type? Yes, you can but this requires that the representation you receive over the network be exactly the same as your struct. A more sensible approach is to serialize your data in some way, and then de-serialize it on the other side.
 
 Serialization is the process of converting the data to some sort of byte-representation so that it can be sent across the network (or stored in a database, or anything really) and then later reconstructed via the deserialization process. This means that no particular data format is needed and systems that don't use the same software or architecture, even, can communicate easily.
 
@@ -128,19 +128,19 @@ int main( int argc, char** argv ) {
 
 Starting from the top then: we need to include the header \texttt{curl/curl.h}. If you are trying to compile and run a program on your own system and this header is not found, you need to install \texttt{libcurl-dev} on the system.
 
-At the beginning of \texttt{main} there are two variables declared. The \texttt{CURL} structure is our ``handle''. This needs to be, like many structures, initialized before use and cleaned up when we're done with it. The \texttt{CURLcode} type is also a useful structure for finding out how operations went. Unlike in many other scenarios where success is assumed, remember, in the network we should always check and see what happened.
+At the beginning of \texttt{main} there are two variables declared. The \texttt{CURL} structure is our ``handle''. This needs to be, like many structures, initialized before use and cleaned up when we're done with it. The \texttt{CURLcode} type is also a useful enum for finding out how operations went. Unlike in many other scenarios where success is assumed, remember, in the network we should always check and see what happened.
 
 All the code that uses the network is bracketed in the \texttt{curl\_global\_init()} and \texttt{curl\_global\_cleanup()}. For the initialization, we take the defaults with \texttt{CURL\_GLOBAL\_DEFAULT} which is sufficient. If we forget to call the global initialization function then the later call to \texttt{curl\_easy\_init} will do it for us, but this is dangerous because having it called more than once is an issue. And of course we should not forget to clean up when done.
 
 Each connection is accessed through the handle, and so the handle is initialized with \texttt{curl\_easy\_init()}. If something goes wrong, the handle is set to NULL (hence why it can be used in the if-statement). If everything went well then we can actually get to work. If you are wondering why there is ``easy'' in the function names, it's not because there is a ``hard'' interface, but there is a ``multi'' interface that we will learn about in the future. (Whether you think the multi interface is hard is a separate discussion).
 
-The next thing to do is set options for the connection. The only mandatory option its the URL to use (otherwise we don't know where to connect to, after all). In this case it's a dummy URL but it will do for the purposes of the code example. In the future we will need to set other options to do anything useful with a response, but for now the simple example leaves that out. There are something like 200 options, according to the documentation, so you can configure just about anything you want.
+The next thing to do is set options for the connection. The only mandatory option is the URL to use (otherwise we don't know where to connect to, after all). In this case it's a dummy URL but it will do for the purposes of the code example. In the future we will need to set other options to do anything useful with a response, but for now the simple example leaves that out. There are something like 200 options, according to the documentation, so you can configure just about anything you want.
 
 With all setup done, then we can perform the request with \texttt{curl\_easy\_perform}. This is the step that actually sends data over the network and retrieves a response. The result is stored in \texttt{res}.
 
 Then we need to check and see if everything worked: \texttt{CURLE\_OK} is the response code if all went well. Otherwise we get back something else and the function \texttt{curl\_easy\_strerror} interprets an error for us making it a little easier to understand what happened... isn't this a lot better than having to go google what the given value of \texttt{errno} is?
 
-A handle can be used multiple times if you need, although you may need to update the options that are set on it to reflect the new things you'd like to happen
+A handle can be used multiple times if you need, although you may need to update the options that are set on it to reflect the new things you'd like to happen.
 
 If we wanted to re-use a handle but clear all the settings there is \texttt{curl\_easy\_reset}, but that's not the case in this scenario since the example is a one-time thing. Instead, we clean up. When we're done with a given handle we clean it up with \texttt{curl\_easy\_cleanup}. And then of course when all is finished there's the global cleanup. Excellent!
 
@@ -252,7 +252,7 @@ A brief explanation is in order. Up at the top there is \texttt{data}, some amou
 
 That function conforms, as you would expect, to the function signature as expected. If we are fortunate then it is possible to send the data in one chunk. But in this example we have intentionally made the data large. So we will now figure out how much we can actually fit in there by figuring out the size of the buffer and seeing if the data to be sent is bigger than the available space. Once we've figured out the limit, we can copy the data with \texttt{memcpy} to the buffer. Then we update where we are reading from and how much space is left. Then we return the amount copied. When all data has been copied, we return 0.
 
-A large amount of the code of \texttt{main} is the same as in the previous example. Some new things of note, are obviously the initialization of the structure \texttt{d}. We set the option for the operation to be POST (upload data) since the default is GET (fetch some data), and then we have to register the read callback as well as send the data to be used when the read function runs.
+A large amount of the code of \texttt{main} is the same as in the previous example. Some new things of note are obviously the initialization of the structure \texttt{d}. We set the option for the operation to be POST (upload data) since the default is GET (fetch some data), and then we have to register the read callback as well as send the data to be used when the read function runs.
 
 In these examples and our brief overview, we have really only scratched the surface of what the curl library can do. But this is enough to get the flavour of how it works and to begin to do useful work with it.
 

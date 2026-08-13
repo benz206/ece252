@@ -238,7 +238,7 @@ int main( int argc, char** argv ) {
     /* parent process */
     /* parent will wait for the child to complete */
     wait(&childStatus);
-    printf("Child Complete with status: %i \n", childStatus);
+    printf("Child Complete with status word: %i \n", childStatus);
     
   }
     
@@ -283,7 +283,7 @@ jz@Freyja:~/fork$
 
 	If the program itself has no explicit call to \texttt{exit}, the \texttt{return} statement at the end of \texttt{main} will have the same effect.
 
-	Let us modify that code above to fork off a child process that will exit ``abnormally'' with an exit code of 1.
+	Let us modify that code above to fork off a child process that will exit ``abnormally'' with an exit code of 1 in a live demo.
 
 	The \texttt{wait} function also returns the process ID of the child.
 
@@ -356,7 +356,7 @@ int main( int argc, char** argv ) {
   }
   
   if ( child_result != 0 ) {
-    printf( "Error %d Occurred.\n", child_result);
+    printf( "Error %d Occurred.\n", WEXITSTATUS(child_result));
   }
   if ( parent_result != 0 ) {
     printf( "Error %d Occurred.\n", parent_result);
@@ -489,14 +489,14 @@ int main( int argc, char** argv ) {
 
 	On the command line: to send a signal, \texttt{kill} followed by a process ID.
 
-	Normally a command like \texttt{kill 24601} will send \texttt{SIGHUP} to a process.
+	Normally a command like \texttt{kill 24601} will send \texttt{SIGTERM} to a process.
 
 	This will, by default, kill the process.\\
 	\quad The process has an opportunity to clean things up if it wants to.
 
 	If the process is still stuck, you can ``force'' kill the process with \texttt{SIGKILL}:\\\ \quad \texttt{kill -9 24601}.
 
-	The \texttt{-9} parameter sends signal 9 (\texttt{SIGKILL}) rather than the default 1 (\texttt{SIGHUP}).
+	The \texttt{-9} parameter sends signal 9 (\texttt{SIGKILL}) rather than the default (\texttt{SIGTERM}).
 
 	Some users are eager to jump to \texttt{kill -9} whenever a process is stuck...
 \end{frame}

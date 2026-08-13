@@ -192,7 +192,7 @@ FILE * fopen( const char* filename, const char* mode )
 
 	This should be done with caution though, because you can go to an arbitrary location, even the middle of a two (or more) byte character.
 
-	And we can't seek when a file is opened for append.
+	And we can't seek for writing when a file is opened for append.
 
 \end{frame}
 
@@ -313,9 +313,9 @@ int result = flock( file_desc, LOCK_EX );
 	The first argument to this is the file pointer where you'd like the data to be written to:
 
 	\begin{lstlisting}[language=C]
-void write_points_to_file( point* p, FILE f ) {
+void write_points_to_file( point* p, FILE* f ) {
   while( p != NULL ) {
-    fprintf(f, "(%d, %d, %d)\n", p->x, p->y, p->z);
+    fprintf(f, "(%.1f, %.1f, %.1f)\n", p->x, p->y, p->z);
     p = p->next;
   }
 }
@@ -621,9 +621,8 @@ int main( int argc, char** argv ){
 
 	The obvious shortcoming: very coarse grained.
 
-	Another strategy is used by SELinux and Windows NT: ACLs.
+	We'll revisit this in the next course!
 
-	... But we will consider that beyond the scope of the course for now.
 \end{frame}
 
 \end{document}
