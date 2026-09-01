@@ -57,7 +57,7 @@
 
 	Our main solution until now is threads!
 
-	If one thread gets blocked on the I/O the other ones can continue and is fine.
+	If one thread gets blocked on the I/O the other ones can continue and are fine.
 
 	But maybe you don't want to use threads, or maybe you can't for a reason?
 
@@ -229,7 +229,7 @@ int  FD_ISSET( int fd, fd_set *set); /* Tests if fd is a part of the set */
 
 	The \texttt{readfds} are obviously sockets we are interested in reading from.
 
-	\texttt{writefds} are accordingly those we are interested in writing from.
+	\texttt{writefds} are accordingly those we are interested in writing to.
 
 	But what about the \texttt{exceptfds} -- this isn't Java, it's not like we're going to get a \texttt{SocketDoesNotFeelLikeDoingWorkRightNowException}.
 
@@ -551,7 +551,7 @@ int poll( struct pollfd *fds, nfds_t nfds, int timeout );
 
 	\texttt{fds}: pointer to array of  \texttt{struct pollfd}.
 
-	\texttt{ndfs}: number of items in the array.
+	\texttt{nfds}: number of items in the array.
 
 	\texttt{timeout}: milliseconds to wait.
 

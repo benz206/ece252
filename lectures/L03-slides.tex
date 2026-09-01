@@ -313,7 +313,7 @@ int result = flock( file_desc, LOCK_EX );
 	The first argument to this is the file pointer where you'd like the data to be written to:
 
 	\begin{lstlisting}[language=C]
-void write_points_to_file( point* p, FILE* f ) {
+void write_points_to_file( point_t* p, FILE* f ) {
   while( p != NULL ) {
     fprintf(f, "(%.1f, %.1f, %.1f)\n", p->x, p->y, p->z);
     p = p->next;

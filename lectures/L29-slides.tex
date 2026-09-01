@@ -355,7 +355,7 @@ void main_loop( evutil_socket_t fd1, evutil_socket_t fd2 ){
         struct event_base *base = event_base_new();
 
         /* The caller has already set up fd1, fd2 somehow, 
-           and make them nonblocking. */
+           and made them nonblocking. */
 
         ev1 = event_new(base, fd1, EV_TIMEOUT|EV_READ|EV_PERSIST, cb_func,
             (char*)"Reading event");
@@ -542,7 +542,7 @@ void eventcb(struct bufferevent *bev, short events, void *ptr) {
          /* We're connected to 127.0.0.1:8080.   Ordinarily we'd do
             something here, like start reading or writing. */
     } else if (events & BEV_EVENT_ERROR) {
-         /* An error occured while connecting. */
+         /* An error occurred while connecting. */
     }
 }
 \end{lstlisting}

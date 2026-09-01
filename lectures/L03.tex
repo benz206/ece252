@@ -123,7 +123,7 @@ This example locks the file exclusively. A shared lock would be \texttt{LOCK\_SH
 Writing to a file is easy enough because it works like \texttt{printf}. In fact, the function call for it is \texttt{fprintf} and the only real difference between that and \texttt{printf} is that the first argument to this is the file pointer where you'd like the data to be written to:
 
 \begin{lstlisting}[language=C]
-void write_points_to_file( point* p, FILE* f ) {
+void write_points_to_file( point_t* p, FILE* f ) {
   while( p != NULL ) {
     fprintf(f, "(%.1f, %.1f, %.1f)\n", p->x, p->y, p->z);
     p = p->next;

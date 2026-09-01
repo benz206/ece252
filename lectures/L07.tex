@@ -171,7 +171,7 @@ bind( socketfd, (struct sockaddr*) &addr, sizeof( addr ));
 
 With that done, we've acquired the resource of port 2520 for our use. We haven't done anything with it yet, but we've taken it for ourselves. You'll notice also this did not happen on the client side. This is because we don't care (usually) on the client side what the outgoing port number is. So we can just skip that step, unless we have a reason to care what the outgoing port is.
 
-Step two is \texttt{listen()}: in this step we wait for incoming connections. This is the simplest step and you just call:
+Step two is \texttt{listen()}: in this step we mark the socket as ready. This is the simplest step and you just call:
 
 \begin{lstlisting}[language=C]
 int listen(int sockfd, int backlog); 

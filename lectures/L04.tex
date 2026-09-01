@@ -78,7 +78,7 @@ Eventually, most processes die. This is sad, but it can happen in one of four wa
 	\item Killed by another process (involuntary)
 \end{enumerate}
 
-Most of the time, the process finishes because it is done doing the work, or the user asks them to. If the command is to compile some piece of code, when the compiler process is finished, it terminates normally. When you are finished writing a document in a text editor, you may click the close button on the window and this will terminate the program normally.
+Most of the time, the process finishes because it is done doing the work, or the user asks it to. If the command is to compile some piece of code, when the compiler process is finished, it terminates normally. When you are finished writing a document in a text editor, you may click the close button on the window and this will terminate the program normally.
 
 Sometimes there is voluntary exit, but with an error. If the user attempts to run a program that requires write access to the temporary directory, and it checks for the permission on startup and does not find it, it may exit voluntarily with an error code. Similarly, the compiler will exit with an error if you ask it to compile a non-existent file~\cite{mos}. In either case, the program has chosen to terminate (not continue) because of the error and it is a voluntary termination.
 

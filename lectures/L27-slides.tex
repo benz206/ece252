@@ -153,7 +153,7 @@ int main( int argc, char** argv ) {
 \begin{frame}
 	\frametitle{Asking is Okay}
 
-	This does mean that we're going to call\texttt{curl\_multi\_perform()} more than once.
+	This does mean that we're going to call \texttt{curl\_multi\_perform()} more than once.
 
 	Doing so doesn't restart or interfere with anything that was already in progress.
 
@@ -210,7 +210,7 @@ curl_multi_wait( CURLM *multi_handle, struct curl_waitfd extra_fds[],
 	\frametitle{Both of them?}
 	We can ask about the status of the request using \texttt{curl\_multi\_info\_read( CURLM* cm, int* msgs\_left )}.
 
-	This returns a pointer to information ``next'' easy handle, if there is one.
+	This returns a pointer to information about the ``next'' easy handle, if there is one.
 
 	The return value is a pointer to a struct of type \texttt{CURLMsg}.
 
@@ -223,11 +223,11 @@ curl_multi_wait( CURLM *multi_handle, struct curl_waitfd extra_fds[],
 
 	We will therefore check the \texttt{CURLMsg} message to see what happened and make sure all is well.
 
-	If our message that we got back with the info read is called \texttt{m}, What we are looking for is that the \texttt{m->msg} is equal to \texttt{CURLMSG\_DONE} -- request completed.
+	If our message that we got back with the info read is called \texttt{m}, what we are looking for is that the \texttt{m->msg} is equal to \texttt{CURLMSG\_DONE} -- request completed.
 
 	If not, this request is still in progress and we aren't ready to evaluate whether it was successful or not.
 
-	If done, we should look at the return code in and the result, in \texttt{m->data.result}.
+	If done, we should look at the return code and the result, in \texttt{m->data.result}.
 
 	If it is \texttt{CURLE\_OK} then everything succeeded. If anything else, it indicates an error.
 
@@ -307,7 +307,7 @@ int main( int argc, char** argv ) {
     CURLcode return_code = 0;
     int still_running = 0; 
     int msgs_left = 0;
-    int http_status_code;
+    long http_status_code;
     const char *szUrl;
 
     curl_global_init( CURL_GLOBAL_ALL );
