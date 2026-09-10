@@ -107,3 +107,14 @@ sympy-plots-for-*.tex/
 
 # xindy
 *.xdy
+
+# Ignore volatile UI-related state
+.obsidian/workspace.json
+.obsidian/app.json
+
+# Ignore system and editor files (more specific to what I do)
+.vscode/
+.idea/
+
+.DS_Store
+Thumbs.db
