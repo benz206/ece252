@@ -100,10 +100,49 @@ int main() {
 ```c
 int main() {
 	int array[10]; // stack allocated
+	// just a funnier way of allocating n * sizeof(T);
 	int *array2 = malloc(10 * sizeof(int));
+	
+	// This one sets everything to 0 for you
+	int *array3 = calloc(10, sizeof(int));
+	
+	// we commonly need to just for loop it to init
+	for (int i = 0; i < 10; ++i) {
+		array2[i] = 0;
+	}
 	
 	free(array2);
 	
 	return 0;
 }
 ```
+- To avoid doing a for loop to init you can use memset.
+```c
+int *array = malloc(10 * sizeof(int));
+memset(array, 0, 10 * sizeof(int));
+
+// this action is bytewise, thus you should only it for 0
+```
+- Remember we do not have the string type, strings are just char arrays
+	- We need to remember to add the null terminator, which means if you have a string of length l, you always need to make space for l + 1 for the `\0`
+- We have some odd function convention, we always try to make the first param either the `struct` or the `variable` being changed
+- There's a little blurb about using the `errno` lib, I think it's fine to assume whenever we need it we'll be given enough instruction
+- Printing gets a bit odd and is annoying
+	- You know the basics, big thing is printf is like f strings in python
+		- `%d` is for digit or `%i`
+		- Basically just take the first char, only like hex is `%x` all others should just be the first char
+- They redefine macros, just be careful again about order of operations, other than that should be fine
+
+```c
+int main(int argc, char** argv) {
+	// argc is the amount of args
+	
+	// argv is the actual array of strings (char arrays)
+	
+	// We also return 0 for success
+	return 0;
+}
+
+// use atoi to convert strings to int
+```
+- Finally we can also declare void types, we usually do this for pointers, so `void *` this is because for example some functions do not care what kind of datatype a pointer is pointing to, e.g. memset, thus it's almost like a generalization
