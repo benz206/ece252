@@ -169,9 +169,11 @@ For \texttt{open()} the following flags may be used for the \texttt{flags} param
 pid_t fork( );
 pid_t wait( int* status );
 pid_t waitpid( pid_t pid, int *status, int options ); /* 0 for options fine */
+int WEXITSTATUS( int status ); /* The child's exit status */
+int execlp(const char *file, const char *arg, ... /* (char *) NULL */);
 void exit( int status );
 \end{lstlisting}
-
+\newpage
 \subsubsection*{Signals}
 
 \begin{lstlisting}[language=C]
@@ -201,7 +203,6 @@ struct ipc_msg {
   long mtype; /* Message type must be > 0 */
   char something[1]; /* Can be replaced with any type or structure */
 };
-
 \end{lstlisting}
 
 \subsubsection*{Pipes and Shared Memory}
@@ -235,7 +236,7 @@ int listen( int sockfd, int backlog );
 int accept( int sockfd, struct sockaddr *addr, socklen_t *len );
 int send( int sockfd, const void* msg, int length, int flags );
 int recv( int sockfd, void * buffer, int length, int flags );
-int sendto( int sfd, const void* msg, int len, unsigned int flags, const struct sockaddr* to, socklen_t tolength );
+int sendto( int sfd, const void* msg, int len, unsigned int flags, const struct sockaddr* to, socklen_t token );
 int recvfrom( int sfd, void* buffer, int len, unsigned int flags, struct sockaddr* from, int* fromlength );
 
 CURLcode curl_global_init( long flags ); /* use CURL_GLOBAL_DEFAULT as flags */
@@ -257,7 +258,7 @@ CURLMcode curl_multi_timeout( CURLM *multi_handle, long *timeout );
 size_t write_callback( char *ptr, size_t size, size_t nmemb, void *userdata );
 size_t read_callback( char *buffer, size_t size, size_t nitems, void *inputdata );
 \end{lstlisting}
-
+\vspace{-1em}
 Options for \texttt{curl\_easy\_setopt}:\\
 \begin{tabular}{l|l|l}
 	\textbf{CURLoption} & \textbf{Meaning} & \textbf{Parameter} \\ \hline
