@@ -198,8 +198,7 @@ int msgsnd( int msqid, const void *ptr, size_t nbytes, int flag );
 ssize_t msgrcv( int msqid, void *ptr, size_t nbytes, long type, int flag );
 int msgctl( int msqid, int command, struct msqid_ds * buf ); /* IPC_RMID for command, NULL for buf */
 
-/* IPC Structure can be any struct you like, as long as the first field is long */
-struct ipc_msg {
+struct ipc_msg { /* IPC Structure can be any struct you like, as long as the first field is long */
   long mtype; /* Message type must be > 0 */
   char something[1]; /* Can be replaced with any type or structure */
 };
@@ -230,6 +229,7 @@ uint32_t ntohl( uint32_t netint32 ); /* Translate 4 byte int to host format */
 uint16_t ntohs( uint16_t netint16 ); /* Translate 2 byte int to host format */
 int getaddrinfo( const char *node, const char *service, const struct addrinfo *hints, 
     struct addrinfo **res ); /* node = URL or IP, service = port */
+void freeaddrinfo( struct addrinfo *res ); /* Release the list allocated by getaddrinfo */
 int connect( int sockfd, struct sockaddr *addr, socklen_t len );
 int bind( int sockfd, const struct sockaddr *addr, socklen_t addrlen );
 int listen( int sockfd, int backlog );
