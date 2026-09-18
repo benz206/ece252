@@ -118,3 +118,5 @@ sympy-plots-for-*.tex/
 
 .DS_Store
 Thumbs.db
+
+.serena/
