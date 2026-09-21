@@ -75,4 +75,68 @@ To block a signal, unblock one or just find out what the current state is, the f
 int sigprocmask(nit how, const sigset_t *set, sigset_t *old_set);
 ```
 
-The first argument is what we would like to do here: if `SIG_BLOCK`
+The first argument is what we would like to do here: if `SIG_BLOCK`, the signals pointed to by set are added to the block list; if `SIG_UNBLOCK` then the ones in set are removed from the block list; if `SIG_SETMASK` then set is assigned to the signal mask.
+
+The third argument is totally optional, and if a pointer is provided then upon a change to the signal mask, `old_set` is updated to contain the values from before the change.
+
+There is also the ability to manage signal disposition in a more advanced way using the function sigaction, but we will consider this beyond the scope of the course.
+
+![[Pasted image 20260921092428.png]]
+
+![[Pasted image 20260921092439.png]]
+
+Finally, if you want to pause your program for a bit until the call is interrupted by a signal, there is the function `int pause()`. This function always returns -1 and it suspends your program until the signal handler runs. This can be useful if we really do need to wait for something.
+
+## Pass your Message
+Earlier, it was mentioned that signals require you to know the recipient process ID, and also that they contain no message. We can now look at something that overcomes both of these limitations.
+
+To deal with the PID problem, what we would like is *indirect communication* where the messages are send to mailboxes (queues). The queue is owned by the operating system, so it is persistent and independent of any particular process. The diagram below shows a simple message queue for communication between processes A and B.
+
+![[Pasted image 20260921093010.png]]
+
+![[Pasted image 20260921093034.png]]
+
+The first step in message-passing is to obtain a *key* that identifies a specific IPC structure (the queue that we will use). Keys are just integer values, so we would like them to be unique (or at least close to it).
+
+One method to generate the key with the "file to key" function found in `sys/ipc.h`
+
+```c
+key_t ftok(char *pathname, int proj);
+```
+
+The key is generated from the given filename, and the value `proj`. The file does have to exist, because the function uses its inode (file structure on the disk that contains the metadata). There is a very small risk of duplicate numbers if you are unlucky since the integer argument allows generating multiple IPC objects based off the same file, but this is small enough to the point where we don't care.
+
+Regardless of how we generate the key, we use it to get the queue with the function.
+```c
+int msgget(key_t key, int flag);
+```
+
+The first parameter is the key that we have previously generated and is straightforward. The `flag` parameter starts with the UNIX permissions and can be modified with additional creation options. The permissions also follow UNIX permissions standards. If the queue is being created for the first time, use `IPC_CREAT`. If you want to also be sure that this is newly created, use a bitwise OR to combine `IPC_CREAT` with `IPC_EXCL` so that the call will fail if the queue already exists.
+
+The return value is the queue ID of the queue we will use. Then we can send and receive messages. But what does a message look like? Unlike in a lot of other contexts, here, the message has a defined structure.
+
+```c
+struct msgbuf {
+	long mtype;
+	char mtext[1];
+};
+```
+This does not mean a message can only be 1 character at a time, however it means that whatever message type you want to send has to be the first part of a long value, anything is fine after that,
+
+```c
+struct private_msgbuf {
+	long mtype;
+	struct pirate_info {
+		char name[30];
+		char ship_type;
+		int notoriety;
+		int cruelty;
+		int booty_value;
+	} info;
+};
+
+int msgsnd(int msqid, const void *ptr, size_t, nbytes, int flag);
+```
+
+The first param is the queue we want to send it to, the second is the message, the third is the size of the data that we want to send, excluding the `mtype` field. The last parameter is for what happens if the queue is full. Normally we just want to wait, so this would be a blocking send, and you can also just provide 0 as the argument, But 
+
