@@ -28,3 +28,94 @@ the command man screen and the user manual will appear to give you some informat
 how to use this. Or you can use Google
 
 Can format this later but I just assume its the same as like tmux.
+
+## Show me the Code!
+Basically a parent can fork itself to create a child process, in which we can then use the system call `wait` to wait for a process to complete.
+```c
+#include <sys/types.h>
+#include <stdio.h>
+#include <unistd.h>
+
+int main(int argc, char** argv) {
+	pid_t pid;
+	int child_status;
+	
+	pid = fork();
+	
+	if (pid < 0) {
+		// Some error occured
+		printf(stderr, "Fork_failed");
+		return 1;
+	} else if (pid == 0) {
+		// child process
+		execlp("/bin/ls", "ls", NULL);
+	} else {
+		// parent process that will wait for the child
+		// to complete
+		wait(&child_status);
+		printf("child complete with status word %i\n", child_status);
+	}
+	
+	return 0;
+}
+```
+
+We just get a simple output of `fork    fork.c Child Complete with status: 0`
+
+Or, to represent this visually:
+![[Pasted image 20260918093436.png]]
+What about termination though? On the assumption that the process is terminating normally and not being killed, the system call for that is just exit. If a program has no explicit call to exit, the return statement at the end of main will have the same effect.
+- **Use of the Fork Design Problem**
+	- It's not necessary for a child to replace itself with another one.
+	- What if we want to make a program where both parts are part of the same source file.
+	- We can use the `fork()` function to create a child process. In this example, the child should call `execute_B()` and return the result to the parent, while `execute_A()` should be called by the parent.
+```c
+pid_t pid;
+int child_result;
+int parent_result;
+
+pid = fork();
+
+if (pid < 0) {
+	// Fork failed
+	return -1;
+} else if (pid == 0) {
+	return execute_B();
+} else {
+	parent_result = execute_A();
+	wait(&child_result);
+}
+
+if (child_result == 0 && parent_result == 0) {
+	// completed
+	return 0;
+}
+
+if (child_result != 0) {
+	printf("Error %d Occurred.\n", WEXITSTATUS(child_result));
+}
+
+if ( parent_result != 0 ) {
+	printf( "Error %d Occurred.\n", parent_result);
+}
+return -1;
+```
+
+## The fork bomb
+- A simple example of how fork can be used maliciously is just have an infinite loop calling fork
+- Easily defendable by just limiting/killing processes over a limit
+
+## Signals
+UNIX systems use signals to indicate events
+- A signal is synchronous if the signal can be attributed to a singular line of code
+- A signal is asynchronous if the signal is from some outside process e.g. ctrl-c or one process/thread sending a signal to another.
+![[Pasted image 20260921083943.png]]
+
+Alternatively, a process could inform the OS it is prepared to handle the signal itself. In any event the signal eventually needs to be handled, even if the handling is to just ignore it. Note that the signals need to be handled, even if its just to simply ignore it.
+
+Signals `SIGKILL` and `SIGSTOP` cannot be blocked, caught or ignored.
+
+On the command line, the command to send a signal is also just kill and the pid as you know.
+
+Using a flag of `-9` will send SIGKILL instead of SIGTERM
+
