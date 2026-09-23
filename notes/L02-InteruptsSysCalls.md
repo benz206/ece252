@@ -1,100 +1,124 @@
 ## Computer Organization
-- **Operating systems** must be aware of exactly what underlying **hardware** they have.
-	- To execute a program we thus need,**main memory**, **system busses**, and a [**processor**](#the-processor) to actually execute instructions
+- **Operating systems** must be aware of exactly what underlying **hardware** they have
+	- To execute a program, we thus need **main memory**, **system buses**, and a [**processor**](#the-processor) to actually execute instructions
+
 ## The Processor
-- As you should probably already know at this point **CPU's** process **instructions**
-- This goes through the **fetch decode execute cycle**
-- Different processors from different manufacturers may use different **instruction sets**, a processor's largest unit is a word, older systems are 32 bit (4 byte) newer systems are 64 bit (8 byte)
-- In addition, since CPU's are so fast, they have specific memory close to them called [**registers**](#the-interrupts) which are orders of magnitude faster than RAM
+- As you should probably already know at this point, **CPUs** process **instructions**
+- This goes through the **fetch-decode-execute cycle**
+- Different processors from different manufacturers may use different **instruction sets**
+	- A processor's largest unit is a **word**: older systems are *32-bit (4 bytes)*, newer systems are *64-bit (8 bytes)*
+- In addition, since CPUs are so fast, they have specific memory close to them called [**registers**](#the-interrupts), which are *orders of magnitude faster* than RAM
 - Some operations are only available in [**supervisor mode**](#motivation-for-dual-mode-operation), as opposed to [**user mode**](#traps)
 - You already know how **pipelining** works
-- [**Disabling interrupts**](#the-interrupts) is an example of a **priveleged instruction**. Attempting it in user mode may cause an error
+- [**Disabling interrupts**](#the-interrupts) is an example of a **privileged instruction**. Attempting it in user mode may cause an error
+
 ## The Interrupts
-- There are 2 types of ways we can do something when we find out something else has completed
-- e.g. you send a document to be processed and then later want to download it as soon as it's processed
-- You can either **poll** for a completed result, or use a sense of an **interrupt**
-- Interrupts can come from a variety of sources including **programs**, **timers**, **I/O**, **hardware failures**, etc.
-- But primarily the goal is just to more efficiently use CPU time, such that only fractions of seconds are used processing something as opposed to like multiple seconds
+- There are 2 ways we can do something when we find out something else has completed
+	- e.g. you send a document to be processed, and then later want to download it as soon as it's processed
+- You can either **poll** for a completed result, or use an **interrupt**
+- Interrupts can come from a variety of sources, including **programs**, **timers**, **I/O**, **hardware failures**, etc.
+- But primarily, the goal is just to use **CPU time more efficiently**, such that only fractions of seconds are used processing something as opposed to multiple seconds
+- As we learned in ECE222, we need to **save state** before we take interrupts, as it is generally bad if some state could be overwritten
+- Sometimes we can also [**disable interrupts**](#the-processor), which is useful if we're doing something important, e.g. an *atomic operation*
+	- This also ties into **interrupt priorities**
+- We also have the concept of **sequential** vs **nested** interrupts, which are exactly what the names imply
+	- You can use **priorities** to combine these approaches, so high-priority interrupts interrupt lower-priority ones, while a medium-priority one would wait once the high-priority one starts
+- To **save state**, we end up using the **stack**; most importantly, we save the <u>*CPU register values*</u>
+- **Multiprogramming** is another small thing to consider: thus far we always assume that the program that was running will be the program returned to, but <u>*this is not always the case*</u>
 
-> [!warning] Correction: utilization means useful work, not a faster operation (L02: Interrupts)
-> Interrupts let the CPU do other useful work while waiting for an operation, then handle its completion notification. They do not inherently shorten the operation itself. **Processor utilization** is the fraction of CPU time spent doing useful work; polling spends time repeatedly checking whether the result is ready.
-
-- As we learned in ECE222 we need to **save states** before we take interrupts, as generally it is bad if some semblance of memory could be overwritten
-- Sometimes we can also [**disable interrupts**](#the-processor), this is useful if we're doing something important e.g. an atomic operation
-	- This also ties into **priorities in interrupts**
-
-> [!warning] Missing: sequential vs. nested interrupts (L02: Interrupts)
-> **Sequential:** finish the current handler before handling another interrupt, for example by temporarily disabling interrupts. Pending interrupts can be handled once interrupts are enabled again. **Nested:** suspend one handler to run another, then resume the suspended handler.
->
-> Priorities can combine these approaches: a high-priority interrupt can interrupt a low-priority handler, but a medium-priority interrupt arriving during the high-priority handler waits until that handler finishes.
-
-- To **save states** we do end up using the **stack**
-
-> [!warning] Clarification: what state is saved (L02: Storing and Restoring State)
-> The important state here is the **CPU register values**, including where execution should resume. In the lecture's model, these are pushed onto the stack before the handler runs, then popped back into the registers afterward. This preserves the interrupted computation when the handler uses those registers; it is not a backup of all program memory.
-
-- **Multiprogramming** is another small thing to consider, thus far we always assume that a program running will be the program returned to, but <u>*this is not always the case*</u>
 ## Traps
-- Another kind of [interrupt](#the-interrupts) is simply a **trap**, this is like an **exception**, which can be generated by an **error** or an **invalid instruction**
-- Most of the time, if an exception is generated, the offending program will be **terminated**, however *sometimes* we'll be given the option to **handle it**
-- We can use traps to sort of wake up sleeping operating systems
-
-> [!warning] Missing: traps can be intentional (L02: It's a Trap!)
-> In the lecture's terminology, a trap is a **software-generated interrupt**, caused either by an error or by a deliberate user-program request. A system call deliberately triggers a trap to enter the OS handler. The OS being “asleep” is an analogy for it not currently executing on that CPU.
-
-- Modern processor keep track of what mode they are in (supervisor/user) through a single bit
-- This is changed when handling [interrupts](#the-interrupts) briefly
-- This also happens when [**system calls**](#summary-invoking-a-sys-call), e.g. if a memory writing program (disk) wants to write something it will call a system call which will then swap the processor into **supervisor**, write the data and then return back to **user mode**
-
-> [!warning] Missing: mode transitions and the lecture's simplification (L02: It's a Trap!)
-> **Supervisor mode = kernel mode.** The lecture assumes two modes tracked by one bit, while explicitly noting that some processors have more modes. At boot, the OS starts in kernel mode; user programs start in user mode. A trap or interrupt transfers control to an OS handler in kernel mode, and the CPU returns to user mode before resuming user code.
+- Another kind of [interrupt](#the-interrupts) is simply a **trap**. This is like an **exception**, which can be generated by an **error** or an **invalid instruction**
+- Most of the time, if an exception is generated, the offending program will be **terminated**; however, *sometimes* we'll be given the option to **handle it**
+- We can use traps to sort of *wake up* a sleeping operating system, and these can be **intentional**, e.g. if it's sleeping and we want to wake it up, we can use a trap
+- Modern processors keep track of what mode they are in (**supervisor/user**) through a **single bit**
+- This is changed briefly when handling [interrupts](#the-interrupts)
+- This also happens with [**system calls**](#summary-invoking-a-sys-call), e.g. if a program wants to write something to disk, it will make a system call, which will then swap the processor into **supervisor mode**, write the data, and then return to **user mode**
+	- Some OSes have more than these 2 modes, but at boot the OS starts in **kernel mode**, and when a user program starts it moves to **user mode**. Traps/interrupts will also move execution into/out of kernel mode
 
 ## Motivation for Dual Mode Operation
 - The motivation mainly comes from **preventing malicious actors from gaining full control** of a system
-- If we leave the choice up to the program running whether to play fair/not fair, they can just choose to access everything while preventing other programs from accessing anything
-- There is definitely a *performance trade off* but for the **security** it is worth it
-
-> [!warning] Missing: protection from mistakes and shared-device conflicts (L02: Motivation for Dual Mode Operation)
-> Dual-mode operation protects against **errant as well as malicious programs**. The lecture's example is two programs accessing one disk: the OS enforces whose request is serviced, so one program cannot simply cancel the other's request and go first. The overhead discussed here is the instructions and time needed to switch modes.
+- If we leave the choice up to the running program whether to play fair or not, it can just choose to access everything while preventing other programs from accessing anything
+- There is definitely a *performance trade-off*, but for the **security** it is worth it
+- This protects against **errant** as well as **malicious** programs, basically both well-intentioned and ill-intentioned ones
 
 ## Example
 Walking through an example:
-Imagine we want to use C code to **read** something on a **UNIX system**
+Imagine we want to use C code to **read** something on a **UNIX system**.
 
-The definition of the function we might wanna use is
+The definition of the function we might want to use is:
 
 ```c
 ssize_t read(int file_descriptor, void *buffer, size_t count);
 ```
 
-The return will return the <u>*number of bytes successfully read*</u>.
+It will return the <u>*number of bytes successfully read*</u>.
 
-Since this is a [**system call**](#summary-invoking-a-sys-call) it will have matching **documentation** we can read
+Since this is a [**system call**](#summary-invoking-a-sys-call), it will have matching **documentation** we can read.
 
 In preparation for the read, we will push all the **parameters** onto the **stack**.
 
 Then it will execute the [**trap instruction**](#traps), *"activating the OS"*.
 
-When the trap occurs, the OS will swap to [**kernel mode**](#traps), and then **examine the request**, it will then **execute the request**, give control back, switch back to **user mode**, and finish.
+When the trap occurs, the OS will swap to [**kernel mode**](#traps), then **examine the request**, **execute the request**, give control back, switch back to **user mode**, and finish.
 
-Back in **user mode**, the read call will finish and return with **control going back to our program**.
+Back in **user mode**, the read call will finish and return, with **control going back to our program**.
 
-There is a more complex example listed that shows an example of actually reading a file
+There is a more complex example that shows actually **reading a file**:
 
-> [!warning] Missing: what the file-reading example demonstrates (L02: Example: Reading from Disk)
-> The program checks `argc == 2`, opens `argv[1]` using `open(..., O_RDONLY)`, checks for `-1`, reads and prints the file, then calls `close(fd)`. The helper allocates a 256-byte buffer, clears it before each read, reads at most 255 bytes, stops when `read()` returns `0`, and frees the buffer afterward.
->
-> Clearing the buffer and leaving one byte unused provides the null terminator needed by `printf("%s", buffer)`: `read()` itself does not append one. See the [GNU C Library explanation of `read()`](https://sourceware.org/glibc/manual/latest/html_node/I_002fO-Primitives.html). The lecture example omits allocation-failure and read-error checks; a `-1` result must be handled separately from end-of-file.
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+
+void readfile(int fd);
+
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		printf("Usage: %s <filename>\n", argv[0]);
+		return -1;
+	}
+	int fd = open(argv[1], O_RDONLY);
+	if (fd == -1) {
+		printf("Unable to open file! %s is invalid name?\n", argv[1]);
+		return -1;
+	}
+	readfile(fd);
+	close(fd);
+	return 0;
+}
+
+void readfile(int fd) {
+	int buf_size = 256;
+	char* buffer = malloc(buf_size);
+	while (1) {
+		memset(buffer, 0, buf_size);
+		int bytes_read = read(fd, buffer, buf_size - 1);
+		if (bytes_read == 0) {
+			break;
+		}
+		printf("%s", buffer);
+	}
+	printf("\nEnd of File.\n");
+	free(buffer);
+}
+```
+
+- `main` checks that exactly **one filename** was given (`argc == 2`), opens it with **`open(..., O_RDONLY)`**, checks for **`-1`** (failure), reads and prints the file, then calls **`close(fd)`**
+- `readfile` allocates a **256-byte buffer**, clears it before each read, reads at most **255 bytes**, and stops when `read()` returns **`0`** (*end of file*), then frees the buffer
+- Clearing the buffer and leaving one byte unused provides the **null terminator** needed by `printf("%s", buffer)`, since <u>*`read()` does not append one itself*</u>
+- The lecture example skips checking whether `malloc` failed or `read` returned **`-1`** (an error), which should be handled separately from end of file
 
 ## Summary: Invoking a Sys Call
-To summarize, the steps, arranged <u>*chronologically*</u> are:
+To summarize, the steps, arranged <u>*chronologically*</u>, are:
 1. The user program **pushes args onto the stack**
 2. The user program invokes the [**sys call**](#example)
-3. The system call puts its **identifier** in the **designated location**.
+3. The system call puts its **identifier** in the **designated location**
 4. The sys call issues the [**trap instruction**](#traps)
-5. The OS responds to the [**interrupt**](#the-interrupts) and **examines the identifier** in the designed location
-6. The os runs the **sys call handler that matches the id**
-7. When the handler finishes, control exists the kernel and goes back to the system call in [**user mode**](#traps)
+5. The OS responds to the [**interrupt**](#the-interrupts) and **examines the identifier** in the designated location
+6. The OS runs the **sys call handler that matches the ID**
+7. When the handler finishes, control exits the kernel and goes back to the system call in [**user mode**](#traps)
 8. Finally, the system call **returns control to the user program**
 
 > [!warning] Clarification: the call and the kernel handler are separate (L02: Example: Reading from Disk)
