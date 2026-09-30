@@ -32,10 +32,7 @@ if (f == NULL) {
 readfile(f);
 fclose(f);
 ```
-
-> [!warning] Missing: keep files open while you still need them (L03: File Operations)
-> Repeatedly opening and closing the same file is **unnecessary and inefficient**. If you will write some data, do other work, then write more, keep the file open in between.
-
+- Repeatedly opening and closing files is obviously bad, as you know the disk will need to read to and from memory which is levels of magnitude faster
 ### Creating a File
 Like allocating memory, creating a new file has some essential steps: first **find a place** to put that file, **allocate** that space and mark it as allocated, and finally **put the file in its appropriate directory**.
 
@@ -50,7 +47,7 @@ If a file's contents should be erased but we want to **keep its metadata**, we c
 
 For everything above (create, read, write, truncate), it turns out that we need an **open call**. All modes are listed in the PDF.
 
-> [!warning] Missing: the `fopen` modes you are expected to know (L03: File Operations)
+> [!success] Missing: the `fopen` modes you are expected to know (L03: File Operations)
 > The call is `FILE *fopen(const char *filename, const char *mode)`.
 >
 > | Mode | Meaning | Creates? | Truncates? | Starts at |
@@ -67,37 +64,21 @@ For everything above (create, read, write, truncate), it turns out that we need 
 ### Repositioning a File
 Since files can be read or written, but usually only one at a time, the pointer for the write location might be the *same* pointer as for reading (a **current position pointer**). As such, we might need the **`fseek()`** call, which adjusts the pointer's position for both reading and writing.
 
-This should be done with *caution* though, as you can go to an **arbitrary location**.
-
-Generally, we only need to seek if we want to **skip ahead or go back**.
-
-> [!warning] Missing: why seeking is dangerous and when it's unnecessary (L03: Repositioning within a File)
-> - An arbitrary location can land in the **middle of a multi-byte character**.
-> - You **can't seek for writing** in a file opened in **append** mode; writes still go to the end.
-> - Reading or writing *n* bytes already **advances the pointer by *n* automatically**. If you read 48 bytes and then seek 48 forward, you end up **96** bytes from where you started, not 48.
+- This should be done with *caution* though, as you can go to an **arbitrary location**.
+	- Generally, we only need to seek if we want to **skip ahead or go back**.
+	- In can also be dangerous because you could accidentally start reading from the middle of a byte which is unwanted behaviour
 
 ### Deleting a File
 Deletion works as one would expect: **find the file**, **mark its space as free**, and then just **remove it from the directory listing**. This is the equivalent of a *soft delete*.
-
-> [!warning] Missing: what "soft" deletion means and how to delete in C (L03: Deleting a File)
-> The data is **not actually erased**; the file system just forgets the file exists. The data may be **recoverable** until that space is overwritten, similar to how a freed pointer in C may still point at the old data. Some systems offer **secure deletion**, which overwrites the old space with zeros.
->
-> In C, delete a file with **`remove(path)`**, e.g. `remove(argv[1]);`.
+- It's soft as in only the pointer/header of the file is deleted as in we no longer care but the data will still be there as setting everything to 0 is inefficient and unnecessary
 
 These **6 fundamental operations** can be combined to do basically everything else, such as *copying a file* (create a new file, read from the old one, write into the new one).
 
-> [!warning] Missing: the OS tracks open files (L03: File Operations)
-> Apart from **create** and **delete**, every operation only works on a file that is **open**. Opening a file gives the program a **reference** to it, and the OS keeps track of **which files are open in which process**. You should close files when you're done, but when a process terminates, its open files are closed automatically.
-
+The OS tracks the file we work with only when it is opened, this gives us a reference to it and the OS will keep track of which files are open in which process, open files are closed automatically when processes terminate.
 ### File Locking
 We can also **lock** files, so that other programs that try to access the file are either *warned* or *denied*.
 
 **Windows** uses locking such that any file that is *open in a program* cannot be deleted. **UNIX**, on the other hand, will still let that file be deleted, and it will be removed from the directory. But once the program finishes with it, it will then be removed properly.
-
-> [!warning] Correction: it's open *files*, not locked programs, and UNIX doesn't lock by default (L03: File Operations)
-> - Locks can be **exclusive** or **shared** (non-exclusive).
-> - Windows prevents deleting a file that is **open in some program**; this isn't about programs being locked.
-> - UNIX does **not lock by default**. Programs *can* lock files if they need to, but otherwise another user can delete a file that is open elsewhere. The deleted file disappears from the directory, but the program that still has it open can **keep reading and writing it**. Its storage is only freed once **no program has it open** anymore.
 
 Locking in Linux uses **`flock()`**, which takes a **file descriptor**, not a `FILE *`, so we convert with **`fileno()`**:
 
@@ -120,9 +101,6 @@ void write(point_t* p, FILE *fp) {
 }
 ```
 
-> [!warning] Correction: the example was missing the file pointer (L03: Reading and Writing)
-> Your original example called `fprintf("something %s", p->data)`, which leaves out exactly the argument that makes it `fprintf`. It's been fixed above to `fprintf(fp, ...)`.
-
 Reading is a bit more of a pain: you need to use **`fscanf`**, which is a *mirror* of `fprintf` (same format specifiers).
 
 ```c
@@ -144,14 +122,7 @@ int main(int argc, char **argv) {
 
 The **return value** of `fscanf` is the <u>*number of elements successfully read*</u>, which in this case is supposed to be two. However, it's worth noting that there's no space in the format string, because `%d` skips leading whitespace, occasionally leading to *hard-to-find bugs*.
 
-> [!warning] Clarification: what the "no space" remark means (L03: Reading and Writing)
-> The format is `"%d,%d\n"`, with **no space after the comma**. It still reads a line like `3, 9` correctly, because **`%d` skips any leading whitespace on its own**. The bugs come from forgetting that this happens. The loop stops when `fscanf` returns anything other than `2`, meaning either **end of file** (`EOF`) or a line that doesn't match the format.
-
 We could also use **`getline`**, which is said to be in previous examples, but I don't recall seeing it.
-
-> [!warning] Clarification: `getline` (L03: Reading and Writing)
-> This lecture only mentions `getline` in passing and doesn't show it. `getline(&line, &len, fp)` reads **one entire line**, including the `\n`, into a heap buffer that it grows as needed; you `free(line)` at the end. For reading user input from the keyboard, there is also plain `scanf`.
-
 ## File Types
 The file type can sometimes be determined from the **extension** of a filename (e.g. `.txt`). However, this is just a *hint* to the operating system as to what program should open the file; the actual contents may differ significantly, and any program can open any file.
 
@@ -194,7 +165,7 @@ We will see later how this actually works, but we just maintain a **count of har
 	- Permissions can also be written in **octal**, where **r = 4**, **w = 2**, **x = 1**
 	- You basically **add** the permissions for each group and then write the three sums side by side as digits
 
-> [!warning] Correction: how precedence actually works (L03: UNIX-Style Permissions)
+Correction: how precedence actually works (L03: UNIX-Style Permissions)
 > The **effective permissions** depend on *which class you fall into*, checked in order: **owner → group → everyone** (not "user"). If you are the owner, you get the **owner bits only**, even if the group or everyone bits are more permissive. The permissions aren't chosen by the person accessing the file; they're set on the file.
 
 > [!warning] Missing: worked examples (L03: UNIX-Style Permissions)
