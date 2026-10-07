@@ -23,10 +23,9 @@ The **Process Control Block (PCB)** will usually have:
 
 ![[Pasted image 20260918083831.png]]
 
-> [!warning] Missing: what the PCB is and when the PC/registers are actually saved (L04: The Process Control Block)
-> The PCB is the **OS's data structure for managing a process**. The kernel creates and updates one per process, and keeps them in memory in some container (e.g. a list). Accounting information is data about the process's **resource usage**.
->
-> Most fields are kept up to date constantly, but the **PC and register data are only saved "when needed"**. While the process runs, the live values are in the CPU. When a [trap](L02-InteruptsSysCalls.md#traps) or **process switch** suspends it, the OS saves the PC (so it resumes at exactly the right instruction) and the registers (so the CPU state is restored) into the PCB. Switching from P0 to P1 means saving P0's state into its PCB, then loading P1's state from P1's PCB. This is the same idea as [saving state for interrupts](L02-InteruptsSysCalls.md#the-interrupts), applied to whole processes.
+ The PCB is the **OS's data structure for managing a process**. The kernel creates and updates one per process, and keeps them in memory in some container (e.g. a list). Accounting information is data about the process's **resource usage**.
+
+ Most fields are kept up to date constantly, but the **PC and register data are only saved "when needed"**. While the process runs, the live values are in the CPU. When a [trap](L02-InteruptsSysCalls.md#traps) or **process switch** suspends it, the OS saves the PC (so it resumes at exactly the right instruction) and the registers (so the CPU state is restored) into the PCB. Switching from P0 to P1 means saving P0's state into its PCB, then loading P1's state from P1's PCB. This is the same idea as [saving state for interrupts](L02-InteruptsSysCalls.md#the-interrupts), applied to whole processes.
 
 ## The Circle of Life
 Unlike energy, processes can be **created and destroyed**. Upon creation, the OS will **create a new PCB** for the process and **initialize** the data in it. This means setting the variables to their initial values, setting the initial state, setting the instruction pointer to the first instruction in `main`, and so on.
@@ -39,10 +38,8 @@ Generally speaking, there are **three main events** that can lead to the creatio
 2. **User request**
 3. **One process spawns another**
 
-When the computer boots up, the OS is started and will begin creating processes. This is sometimes through something like an `init()` function.
-
-> [!warning] Correction: `init` is a process, not a function (L04: Process Family Tree; L05)
-> In UNIX, **`init`** is the **first process** created at boot (PID **1**). It's the ancestor of every other process, like how `Object` is the superclass of every class in Java. An embedded system may create every process it will ever run at boot, but general-purpose OSes also allow the other two routes.
+When the computer boots up, the OS is started and will begin creating processes. This is sometimes through something known as the `init` process which is not a function, it has PID 1, and is the ancestor of every other process.
+This is the first process that will run at boot
 
 At boot time the OS starts up various processes, some of which will be in the **foreground** (visible to the user) and some in the **background**. A user-visible process could be the login screen; background processes are things like servers that share media on a local network.
 
@@ -52,7 +49,7 @@ Users are well known for starting processes whenever they feel like it: basicall
 
 An already-executing program could also spawn another. OK, it just talks about really obvious examples.
 
-> [!warning] Missing: parent/child terminology (L04: Process Creation)
+> [!success] Know: parent/child terminology (L04: Process Creation)
 > When a process spawns another, the spawner is the **parent** and the new one is the **child**. Besides the obvious examples (an email client launching a browser), a program may deliberately split its work into child processes for **parallelism** or **fault tolerance**.
 
 ## Process Destruction
@@ -64,7 +61,7 @@ Eventually, most processes die:
 
 It talks about examples of the above, but I think they're pretty obvious...
 
-> [!warning] Missing: the non-obvious parts of process destruction (L04: Process Destruction)
+> [!Success] Missing: the non-obvious parts of process destruction (L04: Process Destruction)
 > - **Error exit vs. fatal error:** In an error exit, the program *itself* detects a problem (e.g. a missing file) and chooses to quit with an error code. A fatal error (e.g. stack overflow, division by zero) is detected by the **OS**, which sends it to the program. A process can tell the OS it wants to **handle** some errors (like try-catch), and it may survive if it does.
 > - **Permission to kill:** you need the **rights** to kill a process. Normally a user can only kill processes they created, unless they're an administrator.
 > - **Children don't automatically die with their parents:** in both UNIX and Windows, a parent can outlive its child *and vice versa*. See [orphans](#process-family-tree).
@@ -75,24 +72,15 @@ Processes can have **parents** and **children** in a tree-like structure. We cal
 Processes also have a **return value**, but like the `main` function in C, we don't always do anything with it.
 
 Usually, when a child process finishes execution, the parent will wait for the value it returns. If the child continues in a state where it doesn't have anything to do, we call it a **zombie**.
+To clarify this is when it has finished executing but the parent hasn't `wait`-ed so it has like nothing to do
 
 Also, if the child's parent dies before the child does, we call the child an **orphan**.
 
-In UNIX, it will be **adopted by the `init` process**, so it just ends when the OS shuts down.
+In UNIX, it will be **adopted by the `init` process**, so it just is reaped immediately instead of becoming a zombie
 
 This can sometimes be *intentional*, but not always.
-
-> [!warning] Clarification: hierarchy, process groups, and return codes (L04: Process Family Tree)
-> - The hierarchy is a **UNIX** thing. Each process has **exactly one parent** and zero or more children, all the way up to `init`. **Windows has no real hierarchy**: a parent gets a *reference* to its child, but can hand it to another process. A UNIX process can't disinherit a child.
-> - A **process group** is a process **plus all its descendants**, not the whole tree.
-> - By convention, return value **0 = success**, and anything else is an error whose meaning the parent and child agree on.
-
-> [!warning] Correction: what a zombie actually is (L04: Process Family Tree)
-> A zombie is a child that has **already finished executing** but whose **return value hasn't been collected yet** by the parent's `wait`. It's "dead but not gone": its **PCB entry still exists**, and it holds its resources until the value is collected. Once the parent calls `wait`, the child is **reaped** and cleaned up. A zombie isn't sitting around doing nothing; it can't run at all.
-
-> [!warning] Correction: orphans don't live until shutdown (L04: Process Family Tree)
-> When `init` adopts an orphan, it **`wait`s on it** (and ignores the return value). So when the orphan finishes, it gets **reaped immediately** instead of becoming a zombie; it does not stick around until the OS shuts down. Intentional orphans are usually **daemons/services** that are spawned to run in the background.
-
+Hierarchies only exist in Unix, in windows we just have references but these can be given to other processes whereas UNIX cannot disinherit a child.
+A process group is just a process and all of it's descendants, not the entire group, 0 is for success anything else must be agreed upon
 ## The Five-State Model
 The **five states** a process can be in:
 1. **Running**: actively executing right now
