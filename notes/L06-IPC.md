@@ -32,24 +32,16 @@ One way for 2 processes to communicate is through the **file system**. Messages 
 
 They can both agree to write and read at a **specific path/location**. We do have to make sure one process **doesn't overwrite** another's data, but we can often get around this by using **multiple files with unique IDs**.
 
-> [!warning] Missing: the OS is still involved, and the `import/` example (L06: File System)
-> The OS still takes part, since it handles **file creation/manipulation** and the **permissions** for who may read and write the file.
->
-> Lecture example: a producer writes each XML message as its own file in an agreed-upon **`import/`** directory, and the consumer scans that directory and imports whatever it finds. One process only writes, the other only reads, and as long as the sender picks **distinct file names**, a second message can't overwrite the first before it's picked up.
-
+The OS is also obviously involved in this process to determine permissions and such
 ### Message Passing
 **Message passing** is a service provided by the OS, where the sender **gives the message to the OS** and asks that it be delivered to a recipient. There are 2 basic operations: **sending** and **receiving**.
 
-> [!warning] Missing: direct messaging needs the recipient's ID (L06: Message Passing)
-> Messages can be of **fixed or variable size**. In the simplest case, the message is sent **directly to the recipient process**, which means the sender must **know that process's ID**. That limitation is what [message queues](#pass-your-message) solve later.
-
+Messages can be of fixed or variable size, in the simplest case the message is sent directly to the recipient process, which means the sender must know that process's ID. This is later solved with message queues.
 ## Using Signals
 Signals **do not contain a message**; a signal is more just an **announcement** or **alert/alarm** (like a pager: you only see *that* you were paged).
 
 This means it <u>*can't be used for all IPC scenarios*</u>, but it's still enough for some of them, as long as the recipient already knows what the signal means. The constants (e.g. **`SIGKILL`**) are defined in **`signal.h`**.
-
-> [!warning] Missing: why you should use the names, not the numbers (L06: Using Signals)
-> Implementations **don't always agree** on the numbers, especially for higher signals. Writing `SIGKILL` instead of `9` keeps your code portable. (See the [signal table from L05](L05-ProcessesInUnix.md#signals).)
+Constant numbers may change between implementations but the definition (macro should remain constant).
 
 We already learned how to send a signal from the command line. However, there are 2 functions for sending a signal programmatically:
 
@@ -74,8 +66,7 @@ A signal can be sent to a given process, but that process can only actually deal
 
 Interestingly, for most, but not all, signals, your process can just **refuse to listen**. This is called ***blocking*** signals, and it can be done for everything <u>*except `SIGKILL` and `SIGSTOP`*</u>.
 
-> [!warning] Missing: what happens to a blocked signal (L06: Using Signals)
-> A blocked signal **stays pending** until that signal type is unblocked. Blocking is meant to be **temporary**. If the same signal is sent **several times while blocked**, it may only be **delivered once**, depending on the OS.
+A blocked signal stays pending until that signal type is unblocked. Blocking is meant to be temporary. If the same signal is sent several times while blocked, it may only be delivered once, depending on the OS
 
 Signals also have a **default action**. The action taken when a signal is delivered is called the ***disposition*** of the signal. If you don't explicitly change it, the default happens, but we can change it. There are **3 options**: (1) **ignore** it, (2) run a **signal handler**, or (3) run the **default action** (used to *undo* an earlier change, e.g. you ignored it before but no longer want to).
 
