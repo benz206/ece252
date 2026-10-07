@@ -2,15 +2,13 @@
 Earlier on, we mentioned that in UNIX, a process can create other processes. The creating process is the [**parent**](L04-Processes.md#process-family-tree) and the newly created processes are its **children**. Again, every process has a parent.
 
 Each process has a unique ID, which we call the **`pid`** (process ID). For the most part we don't care about it unless we're running a `kill` command.
-
-> [!warning] Missing: the root of the tree (L05: The Process in UNIX)
-> Every parent chain ends at **`init`** (or `launchd` on macOS), which **always has PID 1**. The `pid` is stored in the process's [PCB](L04-Processes.md#the-process-control-block). Don't try to kill `init`: it usually ignores you, but you might crash or reboot the system.
+Every parent chain ends at init or launchd for macOS which will always have PID 1, this is stored in the PCB (Process Control Block). You should not try to kill init, it will usually be ignored but it might crash or reboot the system.
 
 ![[Pasted image 20260918091834.png]]
 
 In a UNIX system, we can obtain a list of processes at any time with the **`ps`** command. The diagram shows a basic hierarchy of how this might be set up.
 
-> [!warning] Missing: what the diagram shows (L05: The Process in UNIX)
+> [!success] Missing: what the diagram shows (L05: The Process in UNIX)
 > Each user who logs in gets a **`login`** process, which spawns the user's **shell** (usually `bash`). Every command you type is then a **child of the shell**.
 
 When you issue a command, like `ls` or `top` (table of processes), a new process is created and the shell will **`wait`** on that process to finish.
@@ -35,11 +33,12 @@ To do this using `gcc`, we can just use the ampersand operator **`&`** to signif
 
 TL;DR: I'm assuming `screen` is basically the same as **tmux**.
 
-> [!warning] Confirmation: `screen` ≈ tmux (L05: The Process in UNIX)
+> [!success] Confirmation: `screen` ≈ tmux (L05: The Process in UNIX)
 > Yes, both are **terminal multiplexers**: detach, log out, reattach later, and the programs inside keep running. The takeaway from the lecture is that **`&` works for non-interactive jobs**, while **`screen`/tmux is for interactive ones** (like an editor).
 
 ## Show Me the Code!
 Basically, a parent can **`fork`** itself to create a child process, and can then use the system call **`wait`** to wait for that process to complete.
+Fork specifically, makes a copy of the calling process, both processes continue from the line right after fork and the only difference between them is the return value.
 
 > [!warning] Missing: what `fork` and `exec` actually do (L05: Show Me The Code!)
 > - **`fork()`** makes a **copy of the calling process**. *Both* processes continue from the line right after the `fork`, and the only difference between them is the **return value**:
@@ -77,9 +76,6 @@ int main(int argc, char** argv) {
 	return 0;
 }
 ```
-
-> [!warning] Correction: `fprintf`, not `printf`, for `stderr` (L05: Show Me The Code!)
-> Your original error branch called `printf(stderr, ...)`. Printing to a specific stream like `stderr` needs **`fprintf`**, exactly like [writing to a file](L03-TheFileSystem.md#reading-and-writing); it's been fixed above. (In real code, `wait` also needs `#include <sys/wait.h>`; the lecture leaves it out.)
 
 We just get a simple output of:
 
@@ -143,19 +139,11 @@ return -1;
 - A simple example of how `fork` can be used **maliciously** is to just have an *infinite loop* calling `fork`
 - Easily defended against by just limiting/killing processes over a limit
 
-> [!warning] Clarification: why it explodes and how it's defended against (L05: The Fork Bomb)
-> Every process in the loop forks, so the count **doubles** each round: **2ⁿ** processes after *n* rounds. That's a **denial-of-service** attack that quickly hits the system's limits. The defenses in the lecture are **preventive limits**: (1) a cap on the **total number of processes per user**, and (2) a cap on the **rate** a user can spawn them. Don't try it on school machines; it can get you banned.
-
 ## Signals
 UNIX systems use **signals** to indicate events
-- A signal is **synchronous** if it can be attributed to a single line of code
+- A signal is **synchronous** if it can be attributed to a single line of code but more specifically it is caused by the process's own execution e.g. division by zero or a segfault.
+- A signal is specifically an interrupt with an integer ID
 - A signal is **asynchronous** if it comes from outside the process, e.g. `Ctrl-C`, or one process/thread sending a signal to another
-
-> [!warning] Missing: what a signal is and the default behaviour (L05: Signals)
-> - "Synchronous" means it's caused by the **process's own execution**, e.g. **division by zero** or a **segfault**.
-> - A signal is basically an **[interrupt](L02-InteruptsSysCalls.md#the-interrupts) with an integer ID**.
-> - By default, the **kernel** handles every signal with a **default handler**. For some signals that means ignoring it (`SIGCHLD`), and for others it means terminating the process (`SIGSEGV`, `SIGINT`, `SIGTERM`...).
-> - Numbers worth remembering from the table: **`SIGINT` = 2** (`Ctrl-C`), **`SIGKILL` = 9**, **`SIGTERM` = 15**, and **`SIGSEGV` = 11**.
 
 ![[Pasted image 20260921083943.png]]
 
@@ -167,9 +155,4 @@ On the command line, the command to send a signal is also just **`kill`** follow
 
 Using the flag **`-9`** will send `SIGKILL` instead of `SIGTERM`.
 
-> [!warning] Missing: why `kill -9` is a last resort (L05: Signals)
-> Plain `kill <pid>` sends **`SIGTERM`**, which *can* be caught, so the process gets a chance to **clean up** before dying. `SIGKILL` can't be caught, so the process dies immediately with **no cleanup**. Try a gentler signal first (`SIGTERM`, `SIGINT`, `SIGHUP`), and only use `-9` if it's still stuck.
->
-> Signals are also a basic form of **inter-process communication**: one process sending a message to another. That leads into [L06](L06-IPC.md).
->
-> Comparison sources: [L05 lecture text](../lectures/L05.tex) and [L05 slides](../lectures/L05-slides.tex).
+Sigterm can be caught so the process can possibly clean up before dying whereas SIGKIll cannot so the process just dies immediately with no cleanup.
