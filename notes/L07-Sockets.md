@@ -117,4 +117,56 @@ The overview of what steps the server is going to do in order is first bind, the
 The listen step is then where we say the socket is ready for connections from a client. The final step being that we establish the connection and start talking.
 
 1. Binding is how we associate the socket with whatever port we want to use. When the `ssh` daemon is available for connection, it's because it has to bound itself to the port 22 using `bind`
-A quick example of this 
+A quick example of this `bind()` function is as follows
+
+```c
+int socketfd = socket(AF_INET, SOCK_STREAM, 0);
+struct sockaddr_in addr;
+addr.sin_fmaily = AF_INET;
+addr.sin_port = htons(2520);
+addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+bind(socketfd, (struct sockaddr*) &addr, sizeof(addr));
+```
+
+This acquires port 2520 for our use. We haven't done anything with it yet but we've like taken it for ourselves, this did not happen on the client side, we usually do not care on the client side what the port number is so we usually just skip that step unless we have some reason not to.
+
+2. Step 2 is to `listen()` which is basically just marking the socket as ready. This is the simplest step and you may call `int listen(int sockfd, int backlog);`
+We listen on a socket that has been bound with bind and we allow a backlog for `backlog` connections that's usually limited to 20 or so, depending on your system. If the queue is full the server system will reject further requests.
+
+Once we've acquired a socket we can start accepting incoming connect requests using `accept()`
+
+```c
+int accept(int sockfd, struct sockaddr *addr, socklen_t *len);
+```
+
+First parameter is the same as always, second is the information about the client, we must allocate them, pass them in, and they are then updated by the call to accept.
+
+If we don't care about who the client is we can just pass in NULL for the second and third params. We don't really care about those values for communication in both directions, but it could be helpful in many contexts to know who exactly the client is.
+
+The return value is a new file descriptor which describes a new socket. Further communication will take place over that socket and not the original one. The original one will remain for accepting connections and the new one is the socket just used for communication with the client.
+
+If `accept` is called and no requests are in the queue, the server is **blocked** until a request arrives. We simply wait for the connection.
+
+```c
+struct sockaddr_in client_addr;
+socklen_t client_addr_size = sizeof(struct sockaddr_in);
+int newsockfd;
+
+int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+struct sockaddr_in server_addr;
+server_addr.sin_family = AF_INET;
+server_addr.sin_port = htons(2520);
+server_addr.sin_addr = htonl(INADDR_ANY);
+
+bind(socketfd, (struct sockaddr*) &server_addr, sizeof(server_addr));
+listen(socketfd, 5);
+new sockfd = accept(socketfd, (struct sockaddr*) &client_addr, &client_addr_size);
+
+close(newsockfd);
+
+close(socketfd);
+```
+
+Then we're finally ready for the client and server to communicate. It is likely that the program will do a lot with the sockets for example you might create some `connect_to` function which can do the initialization, getting address info, and also creating the socket, calling `connect` checking errors, etc.
+
