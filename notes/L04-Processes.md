@@ -23,9 +23,9 @@ The **Process Control Block (PCB)** will usually have:
 
 ![[Pasted image 20260918083831.png]]
 
- The PCB is the **OS's data structure for managing a process**. The kernel creates and updates one per process, and keeps them in memory in some container (e.g. a list). Accounting information is data about the process's **resource usage**.
+The PCB is the **OS's data structure for managing a process**. The kernel creates and updates one per process, and keeps them in memory in some container (e.g. a list). Accounting information is data about the process's **resource usage**.
 
- Most fields are kept up to date constantly, but the **PC and register data are only saved "when needed"**. While the process runs, the live values are in the CPU. When a [trap](L02-InteruptsSysCalls.md#traps) or **process switch** suspends it, the OS saves the PC (so it resumes at exactly the right instruction) and the registers (so the CPU state is restored) into the PCB. Switching from P0 to P1 means saving P0's state into its PCB, then loading P1's state from P1's PCB. This is the same idea as [saving state for interrupts](L02-InteruptsSysCalls.md#the-interrupts), applied to whole processes.
+Most fields are kept up to date constantly, but the **PC and register data are only saved "when needed"**. While the process runs, the live values are in the CPU. When a [trap](L02-InteruptsSysCalls.md#traps) or **process switch** suspends it, the OS saves the PC (so it resumes at exactly the right instruction) and the registers (so the CPU state is restored) into the PCB. Switching from P0 to P1 means saving P0's state into its PCB, then loading P1's state from P1's PCB. This is the same idea as [saving state for interrupts](L02-InteruptsSysCalls.md#the-interrupts), applied to whole processes.
 
 ## The Circle of Life
 Unlike energy, processes can be **created and destroyed**. Upon creation, the OS will **create a new PCB** for the process and **initialize** the data in it. This means setting the variables to their initial values, setting the initial state, setting the instruction pointer to the first instruction in `main`, and so on.
